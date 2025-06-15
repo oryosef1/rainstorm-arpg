@@ -367,17 +367,22 @@ export class ${className} {
     this.pod = pod;
   }
 
-  // === PUBLIC API METHODS ===${spec.apis ? spec.apis.map(api => `
-
+  // === PUBLIC API METHODS ===
+  ${spec.apis ? spec.apis.map(api => {
+    const params = api.parameters.map(p => `${p.name}${p.required ? '' : '?'}: ${p.type}`).join(', ');
+    const logParams = api.parameters.map(p => p.name).join(', ');
+    const logStatement = api.parameters.length > 0 
+      ? `console.log('${api.name} called with:', { ${logParams} });`
+      : `console.log('${api.name} called');`;
+    
+    return `
   /**
    * ${api.description}
    */
-  ${api.async ? 'async ' : ''}${api.name}(${api.parameters.map(p => 
-    `${p.name}${p.required ? '' : '?'}: ${p.type}`
-  ).join(', ')}): ${api.returnType} {
+  ${api.async ? 'async ' : ''}${api.name}(${params}): ${api.returnType} {
     try {
       // TODO: Implement ${api.name} logic
-      ${api.parameters.length > 0 ? `console.log('${api.name} called with:', { ${api.parameters.map(p => p.name).join(', ')} });` : `console.log('${api.name} called');`}
+      ${logStatement}
       
       // Placeholder implementation
       ${api.returnType.includes('Promise') ? 'return Promise.resolve(' : 'return '}${this.getDefaultReturn(api.returnType)}${api.returnType.includes('Promise') ? ')' : ''};
@@ -385,7 +390,8 @@ export class ${className} {
       console.error('❌ Error in ${api.name}:', error);
       throw error;
     }
-  }`).join('') : ''}
+  }`;
+  }).join('') : ''}
 
   // === HELPER METHODS ===
 

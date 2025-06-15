@@ -50,7 +50,8 @@
     "**/node_modules",
     "**/*.js",
     "**/*.js.map",
-    "**/*.d.ts.map"
+    "**/*.d.ts.map",
+    "tools/**/*"
   ],
   "ts-node": {
     "esm": false,
