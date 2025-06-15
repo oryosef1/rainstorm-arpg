@@ -15,15 +15,32 @@
 ## 🎮 **PHASE 9: CORE GAMEPLAY IMPLEMENTATION** (8 tasks) **[NEW CRITICAL PHASE]**
 
 ### **PRIORITY: URGENT - GAME BREAKING GAPS**
+### **🧪 TDD APPROACH: RED-GREEN-REFACTOR FOR ALL TASKS**
 
 - [ ] **Game Engine Integration**: Connect TypeScript ECS systems to HTML5 Canvas runtime with real-time game loop ⚠️ **CRITICAL BLOCKER**
+  - **TDD**: Write tests for GameEngine.start(), gameLoop(), world.update(), renderer.render()
+  - **Files**: `game-core/engine/game-engine.test.ts`, `game-core/engine/game-engine.ts`
 - [ ] **Player Controller System**: Implement WASD movement, mouse targeting, camera following, and world interaction ⚠️ **CRITICAL BLOCKER**  
+  - **TDD**: Write tests for movement input, collision detection, position updates, camera tracking
+  - **Files**: `game-core/engine/player-controller.test.ts`, `game-core/engine/player-controller.ts`
 - [ ] **Combat System Integration**: Connect backend damage calculations to real-time combat with enemy AI, hit detection, and visual feedback ⚠️ **CRITICAL BLOCKER**
+  - **TDD**: Write tests for damage calculation, hit detection, enemy AI behavior, health updates
+  - **Files**: `game-core/combat/real-time-combat.test.ts`, `game-core/combat/real-time-combat.ts`
 - [ ] **Live Inventory Bridge**: Connect TypeScript inventory system to drag-drop UI with real item management and equipment effects ⚠️ **CRITICAL BLOCKER**
+  - **TDD**: Write tests for item pickup, equipment stats, drag-drop validation, inventory state sync
+  - **Files**: `game-core/inventory/inventory-bridge.test.ts`, `game-core/inventory/inventory-bridge.ts`
 - [ ] **Character Progression Bridge**: Connect backend leveling/XP to UI with real stat allocation and skill point distribution ⚠️ **CRITICAL BLOCKER**
+  - **TDD**: Write tests for XP gain, level calculation, stat allocation, skill point distribution
+  - **Files**: `game-core/progression/progression-bridge.test.ts`, `game-core/progression/progression-bridge.ts`
 - [ ] **World & Level System**: Implement actual game areas with collision maps, enemy spawning, and interactive objects ⚠️ **CRITICAL BLOCKER**
+  - **TDD**: Write tests for collision detection, enemy spawning algorithms, object interaction
+  - **Files**: `game-core/world/world-system.test.ts`, `game-core/world/world-system.ts`
 - [ ] **Real-Time UI Updates**: Synchronize all HUD elements (health/mana orbs, XP bar, stats) with actual game state ⚠️ **CRITICAL BLOCKER**
+  - **TDD**: Write tests for UI synchronization, state management, real-time updates
+  - **Files**: `game-core/ui/ui-synchronizer.test.ts`, `game-core/ui/ui-synchronizer.ts`
 - [ ] **Save/Load Integration**: Connect MCP persistence to actual gameplay state with session continuity ⚠️ **CRITICAL BLOCKER**
+  - **TDD**: Write tests for state serialization, MCP integration, session restoration
+  - **Files**: `game-core/persistence/gameplay-persistence.test.ts`, `game-core/persistence/gameplay-persistence.ts`
 
 **PHASE 9 PROGRESS: 0/8 (0%)**
 
@@ -31,12 +48,26 @@
 
 ## 🎯 **PHASE 10: ADVANCED GAMEPLAY SYSTEMS** (6 tasks)
 
+### **🧪 TDD APPROACH: COMPREHENSIVE TEST COVERAGE FOR ALL FEATURES**
+
 - [ ] **Skill System Integration**: Connect active skills from action bar to real combat with cooldowns, mana costs, and visual effects
+  - **TDD**: Write tests for skill activation, cooldown management, mana consumption, effect application
+  - **Files**: `game-core/skills/skill-integration.test.ts`, `game-core/skills/skill-integration.ts`
 - [ ] **Loot & Drop System**: Implement item drops from enemies with pickup mechanics, loot filters, and visual effects
+  - **TDD**: Write tests for drop algorithms, pickup detection, loot filtering, inventory space checks
+  - **Files**: `game-core/loot/loot-system.test.ts`, `game-core/loot/loot-system.ts`
 - [ ] **Quest System UI**: Create quest log interface with NPC dialogue, objectives tracking, and reward distribution
+  - **TDD**: Write tests for quest state management, objective progress, reward calculation, dialogue trees
+  - **Files**: `game-core/quests/quest-ui.test.ts`, `game-core/quests/quest-ui.ts`
 - [ ] **Crafting Interface**: Connect backend crafting to UI with currency orb usage, risk/reward feedback, and master crafting
+  - **TDD**: Write tests for crafting validation, currency consumption, outcome calculation, UI state sync
+  - **Files**: `game-core/crafting/crafting-interface.test.ts`, `game-core/crafting/crafting-interface.ts`
 - [ ] **Multiple Game Areas**: Implement area transitions, waypoint system, and progressive difficulty scaling
+  - **TDD**: Write tests for area loading, transition logic, waypoint unlocking, difficulty calculations
+  - **Files**: `game-core/world/area-system.test.ts`, `game-core/world/area-system.ts`
 - [ ] **Basic AI Systems**: Enemy behavior patterns, aggro systems, and tactical combat AI
+  - **TDD**: Write tests for AI state machines, aggro ranges, behavior trees, tactical decisions
+  - **Files**: `game-core/ai/enemy-ai.test.ts`, `game-core/ai/enemy-ai.ts`
 
 **PHASE 10 PROGRESS: 0/6 (0%)**
 
@@ -44,11 +75,23 @@
 
 ## 🏆 **PHASE 11: ARPG FEATURE COMPLETION** (5 tasks)
 
+### **🧪 TDD APPROACH: ENTERPRISE-GRADE TEST COVERAGE FOR PRODUCTION FEATURES**
+
 - [ ] **Vendor & Trading Systems**: NPC vendors with inventories, buy/sell mechanics, and currency systems
+  - **TDD**: Write tests for vendor inventories, price calculations, transaction validation, currency exchange
+  - **Files**: `game-core/trading/vendor-system.test.ts`, `game-core/trading/vendor-system.ts`
 - [ ] **Advanced Combat Features**: Status effects, elemental damage, critical strikes, and damage over time
+  - **TDD**: Write tests for status effect application, damage type calculations, critical hit logic, DoT systems
+  - **Files**: `game-core/combat/advanced-combat.test.ts`, `game-core/combat/advanced-combat.ts`
 - [ ] **Endgame Content Integration**: Map system with modifiers, Atlas progression, and pinnacle boss encounters
+  - **TDD**: Write tests for map generation, modifier application, Atlas unlocking, boss mechanics
+  - **Files**: `game-core/endgame/endgame-integration.test.ts`, `game-core/endgame/endgame-integration.ts`
 - [ ] **Social & Multiplayer Foundation**: Player interaction systems, chat, and potential multiplayer architecture
+  - **TDD**: Write tests for player discovery, interaction validation, chat systems, synchronization
+  - **Files**: `game-core/social/multiplayer-foundation.test.ts`, `game-core/social/multiplayer-foundation.ts`
 - [ ] **Performance Optimization**: 60 FPS maintenance with hundreds of entities, memory management, and asset optimization
+  - **TDD**: Write performance tests, memory leak detection, FPS monitoring, optimization validation
+  - **Files**: `game-core/performance/optimization.test.ts`, `game-core/performance/optimization.ts`
 
 **PHASE 11 PROGRESS: 0/5 (0%)**
 
@@ -56,10 +99,20 @@
 
 ## 🎨 **PHASE 12: POLISH & PRODUCTION READY** (4 tasks)
 
+### **🧪 TDD APPROACH: PRODUCTION-READY QUALITY ASSURANCE WITH COMPREHENSIVE TESTING**
+
 - [ ] **Audio Integration**: Sound effects, music system, and audio feedback for all game actions
+  - **TDD**: Write tests for audio loading, playback systems, volume controls, audio event triggers
+  - **Files**: `game-core/audio/audio-system.test.ts`, `game-core/audio/audio-system.ts`
 - [ ] **Visual Effects Enhancement**: Particle systems, spell effects, screen shake, and impact feedback
+  - **TDD**: Write tests for particle lifecycle, effect timing, performance impact, visual consistency
+  - **Files**: `game-core/effects/visual-effects.test.ts`, `game-core/effects/visual-effects.ts`
 - [ ] **Quality Assurance**: Comprehensive testing, bug fixing, balance tuning, and performance validation
+  - **TDD**: Write integration tests, end-to-end gameplay tests, performance benchmarks, regression tests
+  - **Files**: `tests/integration/gameplay.test.ts`, `tests/e2e/complete-game.test.ts`, `tests/performance/benchmarks.test.ts`
 - [ ] **Content Generation**: Implement AI-powered infinite content system for quests, items, and areas
+  - **TDD**: Write tests for content generation algorithms, quality validation, content variation, AI integration
+  - **Files**: `game-core/content/ai-generation.test.ts`, `game-core/content/ai-generation.ts`
 
 **PHASE 12 PROGRESS: 0/4 (0%)**
 

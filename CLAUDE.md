@@ -27,8 +27,28 @@
 - ✅ **TypeScript ONLY** - NO .js files
 - ✅ **Feature Pods ONLY** - Complete isolation
 - ✅ **Event communication** - No direct calls between features
-- ✅ **Always test** - TDD required
+- ✅ **TDD MANDATORY** - Red-Green-Refactor cycle
 - ✅ **Git workflow** - Pull → Work → Commit → Push
+
+## 🧪 TDD APPROACH
+**MANDATORY**: All code must follow Test-Driven Development
+
+### Red-Green-Refactor Cycle:
+1. **RED** - Write failing test first
+2. **GREEN** - Write minimal code to pass
+3. **REFACTOR** - Improve code while keeping tests green
+
+### Test Structure:
+```typescript
+// feature-name.test.ts
+describe('FeatureName', () => {
+  test('should do specific behavior', () => {
+    // Arrange, Act, Assert
+  });
+});
+```
+
+**Run Tests**: `npm test`
 
 ## 🔗 LINKS
 - **Repository**: https://github.com/oryosef1/rainstorm-arpg
