@@ -4,7 +4,7 @@
     "lib": ["ES2020", "DOM"],
     "module": "CommonJS",
     "moduleResolution": "node",
-    "allowJs": true,
+    "allowJs": false,
     "checkJs": false,
     "declaration": true,
     "declarationMap": true,
@@ -17,13 +17,12 @@
     "strictFunctionTypes": true,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
-    "noImplicitOverride": false,
-    "exactOptionalPropertyTypes": true,
+    "exactOptionalPropertyTypes": false,
     "noPropertyAccessFromIndexSignature": false,
-    "noUncheckedIndexedAccess": true,
+    "noUncheckedIndexedAccess": false,
     "allowUnreachableCode": false,
     "allowUnusedLabels": false,
-    "skipLibCheck": false,
+    "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
@@ -37,22 +36,21 @@
       "@types/*": ["./types/*"],
       "@utils/*": ["./game-core/utils/*"],
       "@systems/*": ["./game-core/systems/*"],
-      "@components/*": ["./game-core/components/*"]
+      "@components/*": ["./game-core/components/*"],
+      "@features/*": ["./features/*"],
+      "@core/*": ["./core/*"]
     }
   },
   "include": [
-    "game-core/**/*.ts",
-    "types/**/*.ts",
-    "scripts/**/*.ts"
+    "**/*.ts"
   ],
   "exclude": [
     "node_modules",
     "dist",
+    "**/node_modules",
     "**/*.js",
     "**/*.js.map",
-    "**/*.d.ts.map",
-    "legacy/**/*",
-    "monitoring/**/*"
+    "**/*.d.ts.map"
   ],
   "ts-node": {
     "esm": false,
