@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RainStorm ARPG - Dark Fantasy Adventure</title>
+    <meta name="description" content="A modern browser-based Action RPG built with cutting-edge web technologies">
+    <meta name="keywords" content="ARPG, browser game, RPG, action RPG, dark fantasy, Path of Exile">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Roboto:wght@300;400;500;700&family=Fira+Code:wght@300;400;500&display=swap" rel="stylesheet">
+    
+    <!-- Design System -->
+    <link rel="stylesheet" href="ui/styles/design-system.css">
+    <link rel="stylesheet" href="ui/styles/components.css">
+    <link rel="stylesheet" href="ui/styles/visual-effects.css">
+    
+    <style>
+        /* Game-specific layout */
+        .game-container {
+            display: grid;
+            grid-template-areas:
+                "hud-top hud-top hud-top"
+                "hud-left game-canvas hud-right"
+                "hud-bottom hud-bottom hud-bottom";
+            grid-template-columns: 300px 1fr 300px;
+            grid-template-rows: auto 1fr auto;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .game-canvas {
+            grid-area: game-canvas;
+            background: var(--obsidian);
+            border: 2px solid var(--whiskey);
+            border-radius: var(--radius-lg);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .hud-top {
+            grid-area: hud-top;
+            padding: var(--space-md);
+            background: linear-gradient(135deg, 
+                rgba(46, 26, 71, 0.95) 0%, 
+                rgba(91, 60, 139, 0.95) 100%);
+            border-bottom: 2px solid rgba(211, 145, 95, 0.3);
+        }
+        
+        .hud-left {
+            grid-area: hud-left;
+            padding: var(--space-md);
+            background: rgba(46, 26, 71, 0.8);
+            backdrop-filter: blur(10px);
+            border-right: 2px solid rgba(211, 145, 95, 0.3);
+        }
+        
+        .hud-right {
+            grid-area: hud-right;
+            padding: var(--space-md);
+            background: rgba(46, 26, 71, 0.8);
+            backdrop-filter: blur(10px);
+            border-left: 2px solid rgba(211, 145, 95, 0.3);
+        }
+        
+        .hud-bottom {
+            grid-area: hud-bottom;
+            padding: var(--space-md);
+            background: linear-gradient(135deg, 
+                rgba(46, 26, 71, 0.95) 0%, 
+                rgba(91, 60, 139, 0.95) 100%);
+            border-top: 2px solid rgba(211, 145, 95, 0.3);
+        }
+        
+        /* Character Panel */
+        .character-panel {
+            display: flex;
+            align-items: center;
+            gap: var(--space-lg);
+        }
+        
+        .character-portrait {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 3px solid var(--whiskey);
+            background: radial-gradient(circle, 
+                rgba(211, 145, 95, 0.3) 0%, 
+                rgba(46, 26, 71, 0.9) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: var(--text-2xl);
+            color: var(--pearl);
+        }
+        
+        .character-info h2 {
+            font-family: var(--font-display);
+            font-size: var(--text-xl);
+            color: var(--pearl);
+            margin: 0;
+        }
+        
+        .character-class {
+            font-size: var(--text-sm);
+            color: var(--silver);
+            margin-top: var(--space-xs);
+        }
+        
+        /* Resource Orbs Container */
+        .resource-orbs {
+            display: flex;
+            gap: var(--space-lg);
+            align-items: center;
+        }
+        
+        /* Action Bar */
+        .action-bar {
+            display: flex;
+            gap: var(--space-sm);
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .skill-slot {
+            width: 60px;
+            height: 60px;
+            border: 2px solid rgba(176, 176, 176, 0.3);
+            border-radius: var(--radius-lg);
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all var(--transition-base);
+            position: relative;
+            font-size: var(--text-lg);
+            color: var(--silver);
+        }
+        
+        .skill-slot:hover {
+            border-color: var(--whiskey);
+            background: rgba(211, 145, 95, 0.2);
+            transform: scale(1.05);
+        }
+        
+        .skill-slot.active {
+            border-color: var(--whiskey);
+            background: rgba(211, 145, 95, 0.3);
+            box-shadow: 0 0 15px rgba(211, 145, 95, 0.5);
+        }
+        
+        .skill-hotkey {
+            position: absolute;
+            bottom: -2px;
+            right: -2px;
+            background: rgba(0, 0, 0, 0.8);
+            color: var(--pearl);
+            font-family: var(--font-mono);
+            font-size: 10px;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+        
+        /* Stats Panel */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--space-sm);
+            margin-top: var(--space-md);
+        }
+        
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--space-xs) var(--space-sm);
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: var(--radius-sm);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .stat-label {
+            font-size: var(--text-sm);
+            color: var(--silver);
+        }
+        
+        .stat-value {
+            font-family: var(--font-mono);
+            font-weight: var(--font-semibold);
+            color: var(--pearl);
+        }
+        
+        /* Equipment Preview */
+        .equipment-preview {
+            display: grid;
+            grid-template-areas:
+                ". helmet ."
+                "weapon armor shield"
+                ". boots .";
+            gap: var(--space-sm);
+            justify-items: center;
+            margin-top: var(--space-lg);
+        }
+        
+        .equipment-slot {
+            width: 60px;
+            height: 60px;
+            border: 2px solid rgba(176, 176, 176, 0.3);
+            border-radius: var(--radius-lg);
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all var(--transition-base);
+            position: relative;
+        }
+        
+        .equipment-slot:hover {
+            border-color: var(--whiskey);
+            background: rgba(211, 145, 95, 0.2);
+        }
+        
+        .equipment-slot.helmet { grid-area: helmet; }
+        .equipment-slot.weapon { grid-area: weapon; }
+        .equipment-slot.armor { grid-area: armor; }
+        .equipment-slot.shield { grid-area: shield; }
+        .equipment-slot.boots { grid-area: boots; }
+        
+        /* Mini Inventory */
+        .mini-inventory {
+            margin-top: var(--space-lg);
+        }
+        
+        .mini-inventory-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: var(--space-xs);
+            margin-top: var(--space-md);
+        }
+        
+        .mini-inventory-slot {
+            aspect-ratio: 1;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--radius-sm);
+            background: rgba(0, 0, 0, 0.3);
+            cursor: pointer;
+            transition: all var(--transition-base);
+        }
+        
+        .mini-inventory-slot:hover {
+            border-color: var(--whiskey);
+            background: rgba(211, 145, 95, 0.1);
+        }
+        
+        /* Loading Screen */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--obsidian) 0%, var(--valhalla) 100%);
+            z-index: var(--z-maximum);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: opacity var(--transition-slow);
+        }
+        
+        .loading-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .game-title {
+            font-family: var(--font-display);
+            font-size: var(--text-4xl);
+            font-weight: var(--font-bold);
+            color: var(--pearl);
+            text-align: center;
+            margin-bottom: var(--space-2xl);
+            animation: glow-pulse 3s ease-in-out infinite;
+        }
+        
+        .game-subtitle {
+            font-size: var(--text-lg);
+            color: var(--silver);
+            text-align: center;
+            margin-bottom: var(--space-3xl);
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .game-container {
+                grid-template-areas:
+                    "hud-top"
+                    "game-canvas"
+                    "hud-bottom";
+                grid-template-columns: 1fr;
+                grid-template-rows: auto 1fr auto;
+            }
+            
+            .hud-left, .hud-right {
+                display: none;
+            }
+            
+            .character-panel {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .resource-orbs {
+                justify-content: center;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .resource-orb {
+                width: 80px;
+                height: 80px;
+            }
+            
+            .skill-slot {
+                width: 50px;
+                height: 50px;
+            }
+            
+            .equipment-slot {
+                width: 50px;
+                height: 50px;
+            }
+        }
+    </style>
+</head>
+<body class="bg-mystical magical-particles">
+    <!-- Skip Link for Accessibility -->
+    <a href="#game-canvas" class="skip-link">Skip to game</a>
+    
+    <!-- Loading Screen -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <h1 class="game-title text-gold-gradient">RainStorm ARPG</h1>
+        <p class="game-subtitle">Dark Fantasy Adventure Awaits</p>
+        
+        <div class="loading-spinner"></div>
+        
+        <div style="margin-top: var(--space-xl); text-align: center;">
+            <p class="text-sm text-silver">Loading assets and systems...</p>
+            <div class="loading-bar" style="margin-top: var(--space-md);">
+                <div class="loading-progress" id="loadingProgress"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main Game Container -->
+    <div class="game-container" id="gameContainer" style="display: none;">
+        <!-- Top HUD -->
+        <div class="hud-top">
+            <div class="character-panel">
+                <div class="character-portrait">⚔️</div>
+                <div class="character-info">
+                    <h2 id="characterName">Warrior</h2>
+                    <div class="character-class" id="characterClass">Marauder</div>
+                </div>
+                
+                <div class="resource-orbs">
+                    <div class="resource-orb health-orb" id="healthOrb">
+                        <div class="orb-fill" id="healthFill" style="height: 100%;"></div>
+                        <div class="orb-text" id="healthText">100/100</div>
+                        <div class="orb-overlay"></div>
+                    </div>
+                    
+                    <div class="resource-orb mana-orb" id="manaOrb">
+                        <div class="orb-fill" id="manaFill" style="height: 100%;"></div>
+                        <div class="orb-text" id="manaText">50/50</div>
+                        <div class="orb-overlay"></div>
+                    </div>
+                </div>
+                
+                <!-- Experience Bar -->
+                <div style="flex: 1; margin-left: var(--space-lg);">
+                    <div class="progress-bar experience">
+                        <div class="progress-fill" id="expFill" style="width: 25%;"></div>
+                        <div class="progress-text" id="expText">Level 1 - 250/1000 XP</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Left HUD -->
+        <div class="hud-left">
+            <div class="game-card game-card--compact">
+                <div class="game-card__header">
+                    <h3 class="game-card__title text-lg">Character Stats</h3>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <span class="stat-label">Strength</span>
+                        <span class="stat-value" id="strengthStat">15</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Dexterity</span>
+                        <span class="stat-value" id="dexterityStat">12</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Intelligence</span>
+                        <span class="stat-value" id="intelligenceStat">10</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Vitality</span>
+                        <span class="stat-value" id="vitalityStat">18</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Damage</span>
+                        <span class="stat-value text-valencia" id="damageStat">25-40</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Defense</span>
+                        <span class="stat-value text-ice" id="defenseStat">120</span>
+                    </div>
+                </div>
+                
+                <div class="equipment-preview">
+                    <div class="equipment-slot helmet" title="Helmet">🪖</div>
+                    <div class="equipment-slot weapon" title="Weapon">⚔️</div>
+                    <div class="equipment-slot armor" title="Armor">🛡️</div>
+                    <div class="equipment-slot shield" title="Shield">🛡️</div>
+                    <div class="equipment-slot boots" title="Boots">🥾</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Game Canvas Area -->
+        <div class="game-canvas" id="game-canvas" tabindex="0" role="application" aria-label="Game World">
+            <canvas id="gameCanvas" width="800" height="600" style="width: 100%; height: 100%;"></canvas>
+            
+            <!-- Minimap -->
+            <div class="minimap" style="position: absolute; top: 20px; right: 20px;">
+                <canvas class="minimap-canvas" id="minimapCanvas" width="200" height="200"></canvas>
+                <div class="minimap-overlay"></div>
+                <div class="player-indicator"></div>
+            </div>
+        </div>
+        
+        <!-- Right HUD -->
+        <div class="hud-right">
+            <div class="game-card game-card--compact">
+                <div class="game-card__header">
+                    <h3 class="game-card__title text-lg">Quick Inventory</h3>
+                    <button class="game-button game-button--sm game-button--ghost">Open Full</button>
+                </div>
+                <div class="mini-inventory">
+                    <div class="mini-inventory-grid">
+                        <div class="mini-inventory-slot inventory-item rare" data-stack="5" title="Health Potion"></div>
+                        <div class="mini-inventory-slot inventory-item magic" title="Mana Potion"></div>
+                        <div class="mini-inventory-slot inventory-item legendary" title="Ancient Sword"></div>
+                        <div class="mini-inventory-slot"></div>
+                        <div class="mini-inventory-slot inventory-item common" data-stack="12" title="Arrows"></div>
+                        <div class="mini-inventory-slot"></div>
+                        <div class="mini-inventory-slot inventory-item unique" title="Ring of Power"></div>
+                        <div class="mini-inventory-slot"></div>
+                        <div class="mini-inventory-slot inventory-item magic" title="Scroll of Fireball"></div>
+                        <div class="mini-inventory-slot"></div>
+                        <div class="mini-inventory-slot"></div>
+                        <div class="mini-inventory-slot"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Quick Actions -->
+            <div class="game-card game-card--compact" style="margin-top: var(--space-md);">
+                <div class="game-card__header">
+                    <h3 class="game-card__title text-lg">Quick Actions</h3>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: var(--space-sm);">
+                    <button class="game-button game-button--sm">Character (C)</button>
+                    <button class="game-button game-button--sm">Inventory (I)</button>
+                    <button class="game-button game-button--sm">Skills (S)</button>
+                    <button class="game-button game-button--sm">Map (M)</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Bottom HUD -->
+        <div class="hud-bottom">
+            <div class="action-bar">
+                <div class="skill-slot active">
+                    <span>⚔️</span>
+                    <div class="skill-hotkey">1</div>
+                </div>
+                <div class="skill-slot">
+                    <span>🔥</span>
+                    <div class="skill-hotkey">2</div>
+                </div>
+                <div class="skill-slot">
+                    <span>❄️</span>
+                    <div class="skill-hotkey">3</div>
+                </div>
+                <div class="skill-slot">
+                    <span>⚡</span>
+                    <div class="skill-hotkey">4</div>
+                </div>
+                <div class="skill-slot">
+                    <span>🍶</span>
+                    <div class="skill-hotkey">Q</div>
+                </div>
+                <div class="skill-slot">
+                    <span>🧪</span>
+                    <div class="skill-hotkey">W</div>
+                </div>
+                <div class="skill-slot">
+                    <span>📜</span>
+                    <div class="skill-hotkey">E</div>
+                </div>
+                <div class="skill-slot">
+                    <span>🛡️</span>
+                    <div class="skill-hotkey">R</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Game Scripts -->
+    <script>
+        // Loading simulation
+        let loadingProgress = 0;
+        const loadingBar = document.getElementById('loadingProgress');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const gameContainer = document.getElementById('gameContainer');
+        
+        function updateLoading(progress) {
+            loadingProgress = progress;
+            loadingBar.style.width = progress + '%';
+            
+            if (progress >= 100) {
+                setTimeout(() => {
+                    loadingOverlay.classList.add('hidden');
+                    gameContainer.style.display = 'grid';
+                    initializeGame();
+                }, 1000);
+            }
+        }
+        
+        // Simulate loading
+        setTimeout(() => updateLoading(25), 500);
+        setTimeout(() => updateLoading(50), 1000);
+        setTimeout(() => updateLoading(75), 1500);
+        setTimeout(() => updateLoading(100), 2000);
+        
+        function initializeGame() {
+            console.log('Game initialized with design system!');
+            
+            // Initialize canvas
+            const canvas = document.getElementById('gameCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Set canvas size
+            function resizeCanvas() {
+                const container = document.getElementById('game-canvas');
+                canvas.width = container.clientWidth;
+                canvas.height = container.clientHeight;
+            }
+            
+            window.addEventListener('resize', resizeCanvas);
+            resizeCanvas();
+            
+            // Simple demo animation
+            let time = 0;
+            function animate() {
+                time += 0.016;
+                
+                // Clear canvas
+                ctx.fillStyle = '#1a1a1a';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // Draw demo content
+                ctx.fillStyle = '#d3915f';
+                ctx.font = '24px "Cinzel", serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('RainStorm ARPG Demo', canvas.width / 2, canvas.height / 2);
+                
+                ctx.fillStyle = '#b0b0b0';
+                ctx.font = '16px "Roboto", sans-serif';
+                ctx.fillText('Design System Integration Complete!', canvas.width / 2, canvas.height / 2 + 40);
+                
+                // Draw animated elements
+                ctx.save();
+                ctx.translate(canvas.width / 2, canvas.height / 2 + 100);
+                ctx.rotate(time);
+                ctx.fillStyle = '#5b3c8b';
+                ctx.fillRect(-20, -20, 40, 40);
+                ctx.restore();
+                
+                requestAnimationFrame(animate);
+            }
+            animate();
+            
+            // Demo health/mana updates
+            setInterval(() => {
+                const healthFill = document.getElementById('healthFill');
+                const manaFill = document.getElementById('manaFill');
+                const healthText = document.getElementById('healthText');
+                const manaText = document.getElementById('manaText');
+                
+                const healthPercent = 75 + Math.sin(time * 2) * 25;
+                const manaPercent = 60 + Math.cos(time * 1.5) * 40;
+                
+                healthFill.style.height = Math.max(0, healthPercent) + '%';
+                manaFill.style.height = Math.max(0, manaPercent) + '%';
+                
+                const currentHealth = Math.floor(healthPercent);
+                const currentMana = Math.floor(manaPercent);
+                
+                healthText.textContent = `${currentHealth}/100`;
+                manaText.textContent = `${currentMana}/100`;
+            }, 100);
+        }
+        
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            switch(e.key.toLowerCase()) {
+                case 'c':
+                    console.log('Character screen');
+                    break;
+                case 'i':
+                    console.log('Inventory');
+                    break;
+                case 's':
+                    console.log('Skills');
+                    break;
+                case 'm':
+                    console.log('Map');
+                    break;
+                case '1':
+                case '2':
+                case '3':
+                case '4':
+                case 'q':
+                case 'w':
+                case 'e':
+                case 'r':
+                    console.log('Skill activated:', e.key);
+                    break;
+            }
+        });
+        
+        // Accessibility enhancements
+        document.addEventListener('DOMContentLoaded', () => {
+            // Add focus management
+            const skillSlots = document.querySelectorAll('.skill-slot');
+            skillSlots.forEach((slot, index) => {
+                slot.addEventListener('click', () => {
+                    skillSlots.forEach(s => s.classList.remove('active'));
+                    slot.classList.add('active');
+                });
+            });
+            
+            // Add tooltips
+            const equipmentSlots = document.querySelectorAll('.equipment-slot');
+            equipmentSlots.forEach(slot => {
+                slot.addEventListener('mouseenter', showTooltip);
+                slot.addEventListener('mouseleave', hideTooltip);
+            });
+        });
+        
+        function showTooltip(e) {
+            // Tooltip implementation would go here
+            console.log('Show tooltip for:', e.target.title);
+        }
+        
+        function hideTooltip() {
+            // Hide tooltip implementation
+        }
+    </script>
+</body>
+</html>

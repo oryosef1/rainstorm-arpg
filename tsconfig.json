@@ -1,0 +1,63 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "lib": ["ES2020", "DOM"],
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "allowJs": true,
+    "checkJs": false,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "outDir": "./dist",
+    "rootDir": "./",
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitOverride": false,
+    "exactOptionalPropertyTypes": true,
+    "noPropertyAccessFromIndexSignature": false,
+    "noUncheckedIndexedAccess": true,
+    "allowUnreachableCode": false,
+    "allowUnusedLabels": false,
+    "skipLibCheck": false,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "incremental": true,
+    "tsBuildInfoFile": "./dist/.tsbuildinfo",
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "baseUrl": "./",
+    "paths": {
+      "@/*": ["./game-core/*"],
+      "@types/*": ["./types/*"],
+      "@utils/*": ["./game-core/utils/*"],
+      "@systems/*": ["./game-core/systems/*"],
+      "@components/*": ["./game-core/components/*"]
+    }
+  },
+  "include": [
+    "game-core/**/*.ts",
+    "types/**/*.ts",
+    "scripts/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/*.js",
+    "**/*.js.map",
+    "**/*.d.ts.map",
+    "legacy/**/*",
+    "monitoring/**/*"
+  ],
+  "ts-node": {
+    "esm": false,
+    "compilerOptions": {
+      "module": "CommonJS"
+    }
+  }
+}

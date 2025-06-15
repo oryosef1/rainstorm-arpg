@@ -1,0 +1,9 @@
+{
+  "master_volume": 100,
+  "music_volume": 80,
+  "sfx_volume": 90,
+  "particles_enabled": true,
+  "screen_shake": true,
+  "show_fps": true,
+  "performance_mode": "mega_potato"
+}

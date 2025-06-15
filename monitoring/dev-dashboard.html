@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RainStorm ARPG - Real-Time Development Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e1e2e 0%, #2d2d44 100%);
+            color: #ffffff;
+            overflow: hidden;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 250px 1fr 300px;
+            grid-template-rows: 60px 1fr;
+            grid-template-areas: 
+                "header header header"
+                "sidebar main metrics";
+            height: 100vh;
+            gap: 10px;
+            padding: 10px;
+        }
+
+        .header {
+            grid-area: header;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .logo {
+            font-size: 20px;
+            font-weight: bold;
+            color: #00d9ff;
+            text-shadow: 0 0 10px rgba(0, 217, 255, 0.5);
+        }
+
+        .status-indicators {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 12px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.online { background: #00ff88; }
+        .status-dot.warning { background: #ffaa00; }
+        .status-dot.error { background: #ff4444; }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .sidebar {
+            grid-area: sidebar;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            overflow-y: auto;
+        }
+
+        .sidebar h3 {
+            color: #00d9ff;
+            margin-bottom: 15px;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .nav-item {
+            padding: 10px 12px;
+            margin: 5px 0;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 13px;
+            border: 1px solid transparent;
+        }
+
+        .nav-item:hover {
+            background: rgba(0, 217, 255, 0.2);
+            border-color: rgba(0, 217, 255, 0.4);
+        }
+
+        .nav-item.active {
+            background: rgba(0, 217, 255, 0.3);
+            border-color: #00d9ff;
+        }
+
+        .main-content {
+            grid-area: main;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            overflow-y: auto;
+        }
+
+        .metrics-panel {
+            grid-area: metrics;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            overflow-y: auto;
+        }
+
+        .metric-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .metric-title {
+            font-size: 12px;
+            color: #00d9ff;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .metric-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #ffffff;
+        }
+
+        .metric-change {
+            font-size: 11px;
+            margin-top: 5px;
+        }
+
+        .metric-change.positive { color: #00ff88; }
+        .metric-change.negative { color: #ff4444; }
+
+        .chart-container {
+            height: 120px;
+            margin-top: 10px;
+            position: relative;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .chart-line {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 100%;
+        }
+
+        .entity-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .entity-item {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            padding: 10px;
+            margin-bottom: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .entity-item:hover {
+            background: rgba(0, 217, 255, 0.2);
+            border-color: rgba(0, 217, 255, 0.4);
+        }
+
+        .entity-id {
+            font-size: 12px;
+            color: #00d9ff;
+            font-weight: bold;
+        }
+
+        .entity-components {
+            font-size: 11px;
+            color: #cccccc;
+            margin-top: 5px;
+        }
+
+        .system-monitor {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .system-name {
+            font-size: 14px;
+            font-weight: bold;
+            color: #00d9ff;
+            margin-bottom: 10px;
+        }
+
+        .system-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            font-size: 12px;
+        }
+
+        .performance-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+
+        .performance-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff88, #ffaa00, #ff4444);
+            transition: width 0.3s ease;
+        }
+
+        .console-output {
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 8px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .log-entry {
+            margin-bottom: 5px;
+            padding: 2px 0;
+        }
+
+        .log-entry.error { color: #ff4444; }
+        .log-entry.warning { color: #ffaa00; }
+        .log-entry.info { color: #00d9ff; }
+        .log-entry.debug { color: #cccccc; }
+
+        .timestamp {
+            color: #666666;
+            font-size: 10px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-primary {
+            background: #00d9ff;
+            color: #1e1e2e;
+        }
+
+        .btn-primary:hover {
+            background: #00b8dd;
+            box-shadow: 0 4px 15px rgba(0, 217, 255, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.2);
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .hidden { display: none; }
+        
+        .section-title {
+            font-size: 18px;
+            color: #00d9ff;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .mini-chart {
+            height: 60px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 4px;
+            margin-top: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .chart-svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .scrollbar::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+
+        .scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(0, 217, 255, 0.5);
+            border-radius: 4px;
+        }
+
+        .scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 217, 255, 0.7);
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <div class="header">
+            <div class="logo">🌩️ RainStorm ARPG - Development Dashboard</div>
+            <div class="status-indicators">
+                <div class="status-indicator">
+                    <div class="status-dot online" id="gameStatus"></div>
+                    <span>Game</span>
+                </div>
+                <div class="status-indicator">
+                    <div class="status-dot online" id="typeScriptStatus"></div>
+                    <span>TypeScript</span>
+                </div>
+                <div class="status-indicator">
+                    <div class="status-dot online" id="loggingStatus"></div>
+                    <span>Logging</span>
+                </div>
+                <div class="status-indicator">
+                    <span id="currentTime"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="sidebar scrollbar">
+            <h3>Navigation</h3>
+            <div class="nav-item active" data-section="overview">📊 Overview</div>
+            <div class="nav-item" data-section="entities">🎯 Entities</div>
+            <div class="nav-item" data-section="systems">⚙️ Systems</div>
+            <div class="nav-item" data-section="performance">🚀 Performance</div>
+            <div class="nav-item" data-section="memory">💾 Memory</div>
+            <div class="nav-item" data-section="events">📡 Events</div>
+            <div class="nav-item" data-section="console">🖥️ Console</div>
+            <div class="nav-item" data-section="profiler">📈 Profiler</div>
+        </div>
+
+        <div class="main-content scrollbar">
+            <!-- Overview Section -->
+            <div id="overview-section" class="content-section">
+                <div class="section-title">System Overview</div>
+                <div class="grid-2">
+                    <div class="metric-card">
+                        <div class="metric-title">Game Status</div>
+                        <div class="metric-value" id="gameRunning">Running</div>
+                        <div class="metric-change positive">+0ms latency</div>
+                        <div class="mini-chart">
+                            <canvas id="fpsChart" width="280" height="60"></canvas>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-title">TypeScript Compilation</div>
+                        <div class="metric-value" id="tsStatus">✅ Success</div>
+                        <div class="metric-change positive">0 errors, 0 warnings</div>
+                    </div>
+                </div>
+
+                <div class="controls">
+                    <button class="btn btn-primary" onclick="refreshDashboard()">🔄 Refresh</button>
+                    <button class="btn btn-secondary" onclick="exportMetrics()">📥 Export Data</button>
+                    <button class="btn btn-secondary" onclick="clearLogs()">🗑️ Clear Logs</button>
+                </div>
+
+                <div class="console-output scrollbar">
+                    <div class="log-entry info">
+                        <span class="timestamp">[2024-12-14 15:30:01]</span> 
+                        🚀 RainStorm ARPG Dashboard initialized successfully
+                    </div>
+                    <div class="log-entry info">
+                        <span class="timestamp">[2024-12-14 15:30:01]</span> 
+                        ✅ TypeScript migration completed with enterprise-grade type safety
+                    </div>
+                    <div class="log-entry info">
+                        <span class="timestamp">[2024-12-14 15:30:01]</span> 
+                        📊 Real-time monitoring active - tracking 8 core systems
+                    </div>
+                </div>
+            </div>
+
+            <!-- Other sections (hidden by default) -->
+            <div id="entities-section" class="content-section hidden">
+                <div class="section-title">Entity Manager</div>
+                <div class="controls">
+                    <button class="btn btn-primary" onclick="createTestEntity()">➕ Create Entity</button>
+                    <button class="btn btn-secondary" onclick="clearAllEntities()">🗑️ Clear All</button>
+                </div>
+                <div class="entity-list scrollbar" id="entityList">
+                    <!-- Entities will be populated here -->
+                </div>
+            </div>
+
+            <div id="systems-section" class="content-section hidden">
+                <div class="section-title">System Monitor</div>
+                <div id="systemsList">
+                    <!-- Systems will be populated here -->
+                </div>
+            </div>
+
+            <div id="performance-section" class="content-section hidden">
+                <div class="section-title">Performance Metrics</div>
+                <div class="grid-2">
+                    <div class="metric-card">
+                        <div class="metric-title">Frame Rate</div>
+                        <div class="metric-value" id="fpsValue">60 FPS</div>
+                        <div class="chart-container">
+                            <canvas id="fpsDetailChart" width="240" height="120"></canvas>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-title">Update Time</div>
+                        <div class="metric-value" id="updateTime">16.67ms</div>
+                        <div class="chart-container">
+                            <canvas id="updateTimeChart" width="240" height="120"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="memory-section" class="content-section hidden">
+                <div class="section-title">Memory Usage</div>
+                <div class="metric-card">
+                    <div class="metric-title">JavaScript Heap</div>
+                    <div class="metric-value" id="heapUsed">Loading...</div>
+                    <div class="chart-container">
+                        <canvas id="memoryChart" width="100%" height="120"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div id="events-section" class="content-section hidden">
+                <div class="section-title">Event Monitor</div>
+                <div class="console-output scrollbar" id="eventLog">
+                    <!-- Event logs will appear here -->
+                </div>
+            </div>
+
+            <div id="console-section" class="content-section hidden">
+                <div class="section-title">Debug Console</div>
+                <div class="console-output scrollbar" id="debugConsole">
+                    <!-- Debug output will appear here -->
+                </div>
+            </div>
+
+            <div id="profiler-section" class="content-section hidden">
+                <div class="section-title">Performance Profiler</div>
+                <div class="metric-card">
+                    <div class="metric-title">System Performance</div>
+                    <div id="profilerData">
+                        <!-- Profiler data will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="metrics-panel scrollbar">
+            <div class="metric-card">
+                <div class="metric-title">Total Entities</div>
+                <div class="metric-value" id="entityCount">0</div>
+                <div class="metric-change positive" id="entityChange">+0 this session</div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-title">Active Systems</div>
+                <div class="metric-value" id="systemCount">8</div>
+                <div class="metric-change positive">All operational</div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-title">Memory Usage</div>
+                <div class="metric-value" id="memoryUsage">Loading...</div>
+                <div class="metric-change" id="memoryChange">Calculating...</div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-title">TypeScript Status</div>
+                <div class="metric-value">✅ Compiled</div>
+                <div class="metric-change positive">Type-safe ECS</div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-title">Event Rate</div>
+                <div class="metric-value" id="eventRate">0/sec</div>
+                <div class="metric-change" id="eventChange">Real-time</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="dashboard.js"></script>
+</body>
+</html>

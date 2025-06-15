@@ -1,0 +1,235 @@
+# Docker Compose configuration for Agent Dashboard
+# Complete development and production environment setup
+
+version: '3.8'
+
+services:
+  # === DATABASE ===
+  postgres:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: agent_dashboard
+      POSTGRES_USER: dashboard
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-secure_password_change_me}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dashboard -d agent_dashboard"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - dashboard-network
+
+  # === REDIS CACHE ===
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-secure_redis_password}
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - dashboard-network
+
+  # === AGENT DASHBOARD APPLICATION ===
+  dashboard:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      target: runtime
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      # Database
+      DATABASE_URL: postgresql://dashboard:${POSTGRES_PASSWORD:-secure_password_change_me}@postgres:5432/agent_dashboard
+      
+      # Redis
+      REDIS_URL: redis://:${REDIS_PASSWORD:-secure_redis_password}@redis:6379
+      
+      # Authentication
+      JWT_SECRET: ${JWT_SECRET:-generate_secure_jwt_secret_32_chars_min}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin123!@#}
+      
+      # Claude Integration
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      
+      # Application
+      NODE_ENV: production
+      PORT: 3000
+      PROMETHEUS_PORT: 9090
+      
+      # Features
+      ENABLE_PREDICTIVE_DEVELOPMENT: "true"
+      ENABLE_PERFORMANCE_MONITORING: "true"
+      ENABLE_REALTIME_MONITORING: "true"
+      
+      # Security
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:-generate_secure_encryption_key_32_chars}
+      
+      # Monitoring
+      LOG_LEVEL: info
+      METRICS_ENABLED: "true"
+      
+    ports:
+      - "3000:3000"
+      - "9090:9090"
+    volumes:
+      - dashboard_data:/app/data
+      - dashboard_logs:/app/logs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - dashboard-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.dashboard.rule=Host(`dashboard.localhost`)"
+      - "traefik.http.services.dashboard.loadbalancer.server.port=3000"
+
+  # === REVERSE PROXY ===
+  nginx:
+    image: nginx:alpine
+    restart: unless-stopped
+    depends_on:
+      - dashboard
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - nginx_logs:/var/log/nginx
+    networks:
+      - dashboard-network
+    labels:
+      - "traefik.enable=false"
+
+  # === MONITORING STACK ===
+  
+  # Prometheus for metrics collection
+  prometheus:
+    image: prom/prometheus:latest
+    restart: unless-stopped
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    ports:
+      - "9091:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    networks:
+      - dashboard-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.prometheus.rule=Host(`prometheus.localhost`)"
+
+  # Grafana for visualization
+  grafana:
+    image: grafana/grafana:latest
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    ports:
+      - "3001:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    networks:
+      - dashboard-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.grafana.rule=Host(`grafana.localhost`)"
+
+  # ELK Stack for logging
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.8.0
+    restart: unless-stopped
+    environment:
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - xpack.security.enabled=false
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+    networks:
+      - dashboard-network
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.8.0
+    restart: unless-stopped
+    depends_on:
+      - elasticsearch
+    volumes:
+      - ./monitoring/logstash/pipeline:/usr/share/logstash/pipeline:ro
+      - dashboard_logs:/usr/share/logstash/logs:ro
+    networks:
+      - dashboard-network
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.8.0
+    restart: unless-stopped
+    depends_on:
+      - elasticsearch
+    environment:
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+    ports:
+      - "5601:5601"
+    networks:
+      - dashboard-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.kibana.rule=Host(`kibana.localhost`)"
+
+# === NETWORKS ===
+networks:
+  dashboard-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+# === VOLUMES ===
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  dashboard_data:
+    driver: local
+  dashboard_logs:
+    driver: local
+  nginx_logs:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+  elasticsearch_data:
+    driver: local

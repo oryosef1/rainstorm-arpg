@@ -1,0 +1,453 @@
+// Prisma database schema for Agent Dashboard
+// Complete PostgreSQL database layer as specified in agent_dashboard_plan.md
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// === USER MANAGEMENT ===
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  username  String   @unique
+  firstName String?
+  lastName  String?
+  avatar    String?
+  
+  // Authentication
+  passwordHash String
+  salt         String
+  isActive     Boolean @default(true)
+  isVerified   Boolean @default(false)
+  lastLogin    DateTime?
+  
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relationships
+  sessions      UserSession[]
+  dashboards    Dashboard[]
+  workflows     Workflow[]
+  claudeSessions ClaudeSession[]
+  auditLogs     AuditLog[]
+  
+  @@map("users")
+}
+
+model UserSession {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  userAgent String?
+  ipAddress String?
+  expiresAt DateTime
+  isActive  Boolean  @default(true)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("user_sessions")
+}
+
+// === DASHBOARD MANAGEMENT ===
+
+model Dashboard {
+  id          String  @id @default(cuid())
+  name        String
+  description String?
+  
+  // Configuration
+  config      Json
+  layout      Json?
+  theme       String  @default("dark")
+  isPublic    Boolean @default(false)
+  
+  // Ownership
+  userId   String
+  isActive Boolean @default(true)
+  
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relationships
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workflows Workflow[]
+  
+  @@map("dashboards")
+}
+
+// === CLAUDE INTEGRATION ===
+
+model ClaudeSession {
+  id             String  @id @default(cuid())
+  sessionToken   String  @unique
+  specialist     String
+  profile        String
+  permissions    Json
+  context        Json
+  
+  // Status
+  status         String  @default("active") // active, idle, executing, terminated
+  operationCount Int     @default(0)
+  maxOperations  Int     @default(100)
+  
+  // Ownership
+  userId String
+  
+  // Timestamps
+  createdAt    DateTime  @default(now())
+  lastActivity DateTime  @default(now())
+  terminatedAt DateTime?
+  
+  // Relationships
+  user       User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  executions ClaudeExecution[]
+  
+  @@map("claude_sessions")
+}
+
+model ClaudeExecution {
+  id        String @id @default(cuid())
+  sessionId String
+  
+  // Request
+  systemPrompt String
+  userPrompt   String
+  specialist   String
+  profile      String
+  permissions  Json
+  context      Json
+  
+  // Response
+  response      String?
+  toolsUsed     Json?
+  success       Boolean @default(false)
+  errorMessage  String?
+  
+  // Metrics
+  duration       Int? // milliseconds
+  tokensUsed     Int?
+  resourceUsage  Json?
+  
+  // Timestamps
+  startedAt   DateTime  @default(now())
+  completedAt DateTime?
+  
+  // Relationships
+  session ClaudeSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  
+  @@map("claude_executions")
+}
+
+// === WORKFLOW MANAGEMENT ===
+
+model Workflow {
+  id          String  @id @default(cuid())
+  name        String
+  description String?
+  
+  // Workflow Definition
+  steps       Json
+  metadata    Json
+  version     String  @default("1.0.0")
+  tags        String[]
+  
+  // Configuration
+  isTemplate  Boolean @default(false)
+  isPublic    Boolean @default(false)
+  isActive    Boolean @default(true)
+  
+  // Ownership
+  userId      String?
+  dashboardId String?
+  
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relationships
+  user       User?               @relation(fields: [userId], references: [id], onDelete: SetNull)
+  dashboard  Dashboard?          @relation(fields: [dashboardId], references: [id], onDelete: SetNull)
+  executions WorkflowExecution[]
+  
+  @@map("workflows")
+}
+
+model WorkflowExecution {
+  id         String @id @default(cuid())
+  workflowId String
+  
+  // Execution State
+  status      String  @default("pending") // pending, running, completed, failed, cancelled
+  currentStep String?
+  progress    Float   @default(0)
+  
+  // Results
+  results     Json?
+  context     Json
+  error       String?
+  
+  // Metrics
+  duration    Int? // milliseconds
+  stepsTotal  Int  @default(0)
+  stepsCompleted Int @default(0)
+  
+  // Timestamps
+  startedAt   DateTime  @default(now())
+  completedAt DateTime?
+  
+  // Relationships
+  workflow   Workflow           @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  stepResults WorkflowStepResult[]
+  
+  @@map("workflow_executions")
+}
+
+model WorkflowStepResult {
+  id          String @id @default(cuid())
+  executionId String
+  
+  // Step Information
+  stepId      String
+  stepType    String
+  stepName    String
+  
+  // Results
+  status      String @default("pending") // pending, running, completed, failed, skipped
+  result      Json?
+  error       String?
+  
+  // Metrics
+  duration    Int? // milliseconds
+  
+  // Timestamps
+  startedAt   DateTime  @default(now())
+  completedAt DateTime?
+  
+  // Relationships
+  execution WorkflowExecution @relation(fields: [executionId], references: [id], onDelete: Cascade)
+  
+  @@map("workflow_step_results")
+}
+
+// === PERMISSION SYSTEM ===
+
+model PermissionSession {
+  id        String @id @default(cuid())
+  sessionId String @unique
+  
+  // Configuration
+  profile        String
+  permissions    Json
+  restrictions   Json
+  context        Json
+  
+  // Limits
+  timeLimit      Int // milliseconds
+  maxOperations  Int
+  operationCount Int @default(0)
+  
+  // Status
+  status    String @default("active") // active, expired, closed
+  autoApprove Boolean @default(true)
+  
+  // Timestamps
+  createdAt DateTime  @default(now())
+  expiresAt DateTime
+  closedAt  DateTime?
+  
+  // Relationships
+  operations PermissionOperation[]
+  
+  @@map("permission_sessions")
+}
+
+model PermissionOperation {
+  id        String @id @default(cuid())
+  sessionId String
+  
+  // Operation Details
+  operationType String
+  target        String?
+  data          Json?
+  
+  // Authorization
+  authorized Boolean
+  reason     String?
+  
+  // Timestamps
+  requestedAt DateTime @default(now())
+  authorizedAt DateTime?
+  
+  // Relationships
+  session PermissionSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  
+  @@map("permission_operations")
+}
+
+// === MONITORING & ANALYTICS ===
+
+model SystemMetrics {
+  id        String @id @default(cuid())
+  
+  // Metrics
+  cpu       Float
+  memory    Float
+  disk      Float
+  network   Float
+  
+  // Counters
+  activeConnections Int
+  responseTime      Float
+  throughput        Float
+  
+  // Additional Data
+  metadata Json?
+  
+  // Timestamp
+  timestamp DateTime @default(now())
+  
+  @@map("system_metrics")
+}
+
+model RealtimeEvent {
+  id      String @id @default(cuid())
+  type    String
+  title   String
+  message String
+  level   String @default("info") // info, warning, error, success
+  source  String
+  
+  // Event Data
+  data Json?
+  
+  // Status
+  processed Boolean @default(false)
+  
+  // Timestamp
+  timestamp DateTime @default(now())
+  
+  @@map("realtime_events")
+}
+
+model SystemAlert {
+  id      String @id @default(cuid())
+  level   String // info, warning, error, critical
+  title   String
+  message String
+  source  String
+  
+  // Status
+  resolved   Boolean   @default(false)
+  resolvedAt DateTime?
+  resolvedBy String?
+  
+  // Additional Data
+  metadata Json?
+  
+  // Timestamp
+  timestamp DateTime @default(now())
+  
+  @@map("system_alerts")
+}
+
+// === AUDIT LOGGING ===
+
+model AuditLog {
+  id     String @id @default(cuid())
+  action String
+  
+  // Context
+  userId    String?
+  sessionId String?
+  
+  // Request Details
+  ipAddress String?
+  userAgent String?
+  
+  // Action Data
+  data      Json
+  
+  // Result
+  success Boolean @default(true)
+  error   String?
+  
+  // Timestamp
+  timestamp DateTime @default(now())
+  
+  // Relationships
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  
+  @@map("audit_logs")
+}
+
+// === PERFORMANCE TRACKING ===
+
+model PerformanceMetric {
+  id       String @id @default(cuid())
+  category String // claude, workflow, system, api
+  name     String
+  value    Float
+  unit     String?
+  
+  // Context
+  entityId   String?
+  entityType String?
+  
+  // Additional Data
+  metadata Json?
+  
+  // Timestamp
+  timestamp DateTime @default(now())
+  
+  @@index([category, name, timestamp])
+  @@map("performance_metrics")
+}
+
+// === FEATURE FLAGS ===
+
+model FeatureFlag {
+  id          String  @id @default(cuid())
+  name        String  @unique
+  description String?
+  
+  // Configuration
+  enabled     Boolean @default(false)
+  rolloutPercent Float @default(0)
+  config      Json?
+  
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@map("feature_flags")
+}
+
+// === CONFIGURATION ===
+
+model Configuration {
+  id       String @id @default(cuid())
+  key      String @unique
+  value    Json
+  category String?
+  
+  // Metadata
+  description String?
+  isSecret    Boolean @default(false)
+  
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@map("configurations")
+}

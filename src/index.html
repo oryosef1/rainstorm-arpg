@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= htmlWebpackPlugin.options.title %></title>
+    <meta name="description" content="RainStorm ARPG - A complete Action RPG inspired by Path of Exile">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            color: #ffffff;
+            overflow: hidden;
+        }
+
+        #game-canvas {
+            display: block;
+            margin: 0 auto;
+            background: #000;
+            border: 2px solid #333;
+        }
+
+        #game-ui {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        #health-bar, #mana-bar {
+            position: absolute;
+            top: 20px;
+            width: 200px;
+            height: 20px;
+            border: 2px solid #333;
+            background: rgba(0, 0, 0, 0.7);
+            pointer-events: auto;
+        }
+
+        #health-bar {
+            left: 20px;
+        }
+
+        #mana-bar {
+            left: 240px;
+        }
+
+        #health-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff0000, #ff6666);
+            transition: width 0.3s ease;
+        }
+
+        #mana-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #0066ff, #66b3ff);
+            transition: width 0.3s ease;
+        }
+
+        #inventory-panel {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 300px;
+            height: 400px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #666;
+            display: none;
+            pointer-events: auto;
+        }
+
+        #character-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 250px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #666;
+            padding: 10px;
+            display: none;
+            pointer-events: auto;
+        }
+
+        #skill-tree-panel {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%;
+            height: 80%;
+            background: rgba(0, 0, 0, 0.9);
+            border: 2px solid #666;
+            display: none;
+            pointer-events: auto;
+        }
+
+        #fpsDisplay {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            color: #00ff00;
+            font-family: monospace;
+            font-size: 14px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 5px;
+            border-radius: 3px;
+        }
+
+        .ui-button {
+            background: linear-gradient(135deg, #4a4a4a 0%, #2a2a2a 100%);
+            border: 1px solid #666;
+            color: #fff;
+            padding: 8px 16px;
+            margin: 4px;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 12px;
+            transition: all 0.2s ease;
+        }
+
+        .ui-button:hover {
+            background: linear-gradient(135deg, #5a5a5a 0%, #3a3a3a 100%);
+            border-color: #888;
+        }
+
+        .ui-button:active {
+            background: linear-gradient(135deg, #3a3a3a 0%, #1a1a1a 100%);
+        }
+
+        #loading-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        #loading-text {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #ffffff;
+        }
+
+        #loading-bar {
+            width: 300px;
+            height: 20px;
+            border: 2px solid #333;
+            background: rgba(0, 0, 0, 0.7);
+            overflow: hidden;
+        }
+
+        #loading-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff66, #66ff99);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loading-screen">
+        <div id="loading-text">Loading RainStorm ARPG...</div>
+        <div id="loading-bar">
+            <div id="loading-fill"></div>
+        </div>
+    </div>
+
+    <!-- Game Canvas -->
+    <canvas id="game-canvas" width="1920" height="1080"></canvas>
+
+    <!-- Game UI Overlay -->
+    <div id="game-ui">
+        <!-- Health and Mana Bars -->
+        <div id="health-bar">
+            <div id="health-fill" style="width: 100%;"></div>
+        </div>
+        <div id="mana-bar">
+            <div id="mana-fill" style="width: 100%;"></div>
+        </div>
+
+        <!-- FPS Display -->
+        <div id="fpsDisplay">FPS: 60</div>
+
+        <!-- Character Panel -->
+        <div id="character-panel">
+            <h3>Character</h3>
+            <div id="character-stats">
+                <div>Level: <span id="char-level">1</span></div>
+                <div>Class: <span id="char-class">Marauder</span></div>
+                <div>Strength: <span id="char-str">23</span></div>
+                <div>Dexterity: <span id="char-dex">14</span></div>
+                <div>Intelligence: <span id="char-int">14</span></div>
+            </div>
+            <button class="ui-button" onclick="toggleCharacterPanel()">Close</button>
+        </div>
+
+        <!-- Inventory Panel -->
+        <div id="inventory-panel">
+            <h3>Inventory</h3>
+            <div id="inventory-grid"></div>
+            <button class="ui-button" onclick="toggleInventory()">Close</button>
+        </div>
+
+        <!-- Skill Tree Panel -->
+        <div id="skill-tree-panel">
+            <h3>Passive Skill Tree</h3>
+            <div id="skill-tree-canvas"></div>
+            <button class="ui-button" onclick="toggleSkillTree()">Close</button>
+        </div>
+
+        <!-- Control Buttons -->
+        <div style="position: absolute; bottom: 20px; left: 20px;">
+            <button class="ui-button" onclick="toggleCharacterPanel()">Character (C)</button>
+            <button class="ui-button" onclick="toggleInventory()">Inventory (I)</button>
+            <button class="ui-button" onclick="toggleSkillTree()">Skill Tree (S)</button>
+        </div>
+    </div>
+
+    <script>
+        // Basic UI functions
+        function toggleCharacterPanel() {
+            const panel = document.getElementById('character-panel');
+            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function toggleInventory() {
+            const panel = document.getElementById('inventory-panel');
+            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function toggleSkillTree() {
+            const panel = document.getElementById('skill-tree-panel');
+            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(event) {
+            switch(event.key.toLowerCase()) {
+                case 'c':
+                    toggleCharacterPanel();
+                    break;
+                case 'i':
+                    toggleInventory();
+                    break;
+                case 's':
+                    toggleSkillTree();
+                    break;
+                case 'escape':
+                    // Close all panels
+                    document.getElementById('character-panel').style.display = 'none';
+                    document.getElementById('inventory-panel').style.display = 'none';
+                    document.getElementById('skill-tree-panel').style.display = 'none';
+                    break;
+            }
+        });
+
+        // Game initialization
+        window.addEventListener('load', function() {
+            // Simulate loading
+            let progress = 0;
+            const loadingFill = document.getElementById('loading-fill');
+            const loadingText = document.getElementById('loading-text');
+            
+            const loadingInterval = setInterval(() => {
+                progress += Math.random() * 15;
+                if (progress > 100) progress = 100;
+                
+                loadingFill.style.width = progress + '%';
+                
+                if (progress < 30) {
+                    loadingText.textContent = 'Loading assets...';
+                } else if (progress < 60) {
+                    loadingText.textContent = 'Initializing game world...';
+                } else if (progress < 90) {
+                    loadingText.textContent = 'Loading character data...';
+                } else {
+                    loadingText.textContent = 'Starting game...';
+                }
+                
+                if (progress >= 100) {
+                    clearInterval(loadingInterval);
+                    setTimeout(() => {
+                        document.getElementById('loading-screen').classList.add('hidden');
+                        console.log('🎮 RainStorm ARPG - Game Ready!');
+                    }, 500);
+                }
+            }, 100);
+        });
+    </script>
+</body>
+</html>

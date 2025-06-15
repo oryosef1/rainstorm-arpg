@@ -1,0 +1,538 @@
+# Kubernetes deployment configuration for Agent Dashboard
+# Production-ready orchestration setup from agent_dashboard_plan.md
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: agent-dashboard
+  labels:
+    name: agent-dashboard
+    app: agent-dashboard
+
+---
+# === CONFIGMAP ===
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dashboard-config
+  namespace: agent-dashboard
+data:
+  NODE_ENV: "production"
+  PORT: "3000"
+  PROMETHEUS_PORT: "9090"
+  LOG_LEVEL: "info"
+  METRICS_ENABLED: "true"
+  ENABLE_PREDICTIVE_DEVELOPMENT: "true"
+  ENABLE_PERFORMANCE_MONITORING: "true"
+  ENABLE_REALTIME_MONITORING: "true"
+
+---
+# === SECRETS ===
+apiVersion: v1
+kind: Secret
+metadata:
+  name: dashboard-secrets
+  namespace: agent-dashboard
+type: Opaque
+stringData:
+  DATABASE_URL: "postgresql://dashboard:secure_password@postgres:5432/agent_dashboard"
+  REDIS_URL: "redis://:secure_redis_password@redis:6379"
+  JWT_SECRET: "your-secure-jwt-secret-32-characters-minimum"
+  ADMIN_PASSWORD: "secure-admin-password"
+  ANTHROPIC_API_KEY: "your-anthropic-api-key"
+  ENCRYPTION_KEY: "your-secure-encryption-key-32-chars"
+
+---
+# === POSTGRESQL DEPLOYMENT ===
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+  namespace: agent-dashboard
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:15-alpine
+        env:
+        - name: POSTGRES_DB
+          value: "agent_dashboard"
+        - name: POSTGRES_USER
+          value: "dashboard"
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: dashboard-secrets
+              key: POSTGRES_PASSWORD
+        ports:
+        - containerPort: 5432
+        volumeMounts:
+        - name: postgres-storage
+          mountPath: /var/lib/postgresql/data
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        readinessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - dashboard
+            - -d
+            - agent_dashboard
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        livenessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - dashboard
+            - -d
+            - agent_dashboard
+          initialDelaySeconds: 30
+          periodSeconds: 10
+      volumes:
+      - name: postgres-storage
+        persistentVolumeClaim:
+          claimName: postgres-pvc
+
+---
+# === POSTGRESQL SERVICE ===
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: agent-dashboard
+spec:
+  selector:
+    app: postgres
+  ports:
+  - port: 5432
+    targetPort: 5432
+  type: ClusterIP
+
+---
+# === POSTGRESQL PVC ===
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-pvc
+  namespace: agent-dashboard
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: fast-ssd
+
+---
+# === REDIS DEPLOYMENT ===
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: agent-dashboard
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+      - name: redis
+        image: redis:7-alpine
+        command:
+        - redis-server
+        - --appendonly
+        - "yes"
+        - --requirepass
+        - "$(REDIS_PASSWORD)"
+        env:
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: dashboard-secrets
+              key: REDIS_PASSWORD
+        ports:
+        - containerPort: 6379
+        volumeMounts:
+        - name: redis-storage
+          mountPath: /data
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "250m"
+        readinessProbe:
+          exec:
+            command:
+            - redis-cli
+            - ping
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        livenessProbe:
+          exec:
+            command:
+            - redis-cli
+            - ping
+          initialDelaySeconds: 15
+          periodSeconds: 10
+      volumes:
+      - name: redis-storage
+        persistentVolumeClaim:
+          claimName: redis-pvc
+
+---
+# === REDIS SERVICE ===
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  namespace: agent-dashboard
+spec:
+  selector:
+    app: redis
+  ports:
+  - port: 6379
+    targetPort: 6379
+  type: ClusterIP
+
+---
+# === REDIS PVC ===
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: redis-pvc
+  namespace: agent-dashboard
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: fast-ssd
+
+---
+# === DASHBOARD DEPLOYMENT ===
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dashboard
+  namespace: agent-dashboard
+  labels:
+    app: dashboard
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+      app: dashboard
+  template:
+    metadata:
+      labels:
+        app: dashboard
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+        prometheus.io/path: "/metrics"
+    spec:
+      initContainers:
+      - name: migrate
+        image: dashboard:latest
+        command: ["npx", "prisma", "migrate", "deploy"]
+        envFrom:
+        - configMapRef:
+            name: dashboard-config
+        - secretRef:
+            name: dashboard-secrets
+      containers:
+      - name: dashboard
+        image: dashboard:latest
+        ports:
+        - containerPort: 3000
+          name: http
+        - containerPort: 9090
+          name: metrics
+        envFrom:
+        - configMapRef:
+            name: dashboard-config
+        - secretRef:
+            name: dashboard-secrets
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+        volumeMounts:
+        - name: dashboard-data
+          mountPath: /app/data
+        - name: dashboard-logs
+          mountPath: /app/logs
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1001
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+      volumes:
+      - name: dashboard-data
+        persistentVolumeClaim:
+          claimName: dashboard-data-pvc
+      - name: dashboard-logs
+        persistentVolumeClaim:
+          claimName: dashboard-logs-pvc
+      securityContext:
+        fsGroup: 1001
+
+---
+# === DASHBOARD SERVICE ===
+apiVersion: v1
+kind: Service
+metadata:
+  name: dashboard
+  namespace: agent-dashboard
+  labels:
+    app: dashboard
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "9090"
+spec:
+  selector:
+    app: dashboard
+  ports:
+  - name: http
+    port: 80
+    targetPort: 3000
+  - name: metrics
+    port: 9090
+    targetPort: 9090
+  type: ClusterIP
+
+---
+# === DASHBOARD INGRESS ===
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: dashboard-ingress
+  namespace: agent-dashboard
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+    nginx.ingress.kubernetes.io/websocket-services: "dashboard"
+spec:
+  tls:
+  - hosts:
+    - dashboard.yourdomain.com
+    secretName: dashboard-tls
+  rules:
+  - host: dashboard.yourdomain.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: dashboard
+            port:
+              number: 80
+
+---
+# === HORIZONTAL POD AUTOSCALER ===
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: dashboard-hpa
+  namespace: agent-dashboard
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: dashboard
+  minReplicas: 3
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Percent
+        value: 10
+        periodSeconds: 60
+    scaleUp:
+      stabilizationWindowSeconds: 30
+      policies:
+      - type: Percent
+        value: 50
+        periodSeconds: 60
+
+---
+# === PERSISTENT VOLUME CLAIMS ===
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: dashboard-data-pvc
+  namespace: agent-dashboard
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+  storageClassName: fast-ssd
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: dashboard-logs-pvc
+  namespace: agent-dashboard
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: standard
+
+---
+# === SERVICE MONITOR FOR PROMETHEUS ===
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: dashboard-metrics
+  namespace: agent-dashboard
+  labels:
+    app: dashboard
+spec:
+  selector:
+    matchLabels:
+      app: dashboard
+  endpoints:
+  - port: metrics
+    interval: 15s
+    path: /metrics
+
+---
+# === NETWORK POLICY ===
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: dashboard-network-policy
+  namespace: agent-dashboard
+spec:
+  podSelector:
+    matchLabels:
+      app: dashboard
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: ingress-nginx
+    ports:
+    - protocol: TCP
+      port: 3000
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: monitoring
+    ports:
+    - protocol: TCP
+      port: 9090
+  egress:
+  - to:
+    - podSelector:
+        matchLabels:
+          app: postgres
+    ports:
+    - protocol: TCP
+      port: 5432
+  - to:
+    - podSelector:
+        matchLabels:
+          app: redis
+    ports:
+    - protocol: TCP
+      port: 6379
+  - to: []
+    ports:
+    - protocol: TCP
+      port: 443  # HTTPS outbound
+    - protocol: TCP
+      port: 53   # DNS
+    - protocol: UDP
+      port: 53   # DNS
+
+---
+# === POD DISRUPTION BUDGET ===
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: dashboard-pdb
+  namespace: agent-dashboard
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: dashboard

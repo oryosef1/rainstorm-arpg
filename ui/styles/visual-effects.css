@@ -1,0 +1,1231 @@
+/* =============================================================================
+   RainStorm ARPG - Visual Effects System
+   AAA-Quality Animations & Particle Effects
+   ============================================================================= */
+
+/* =============================================================================
+   ITEM DROP EFFECTS
+   ============================================================================= */
+
+@keyframes item-drop {
+  0% {
+    transform: translateY(-50px) scale(0) rotate(180deg);
+    opacity: 0;
+  }
+  50% {
+    transform: translateY(0) scale(1.2) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0) scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+.item-drop-effect {
+  animation: item-drop 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.legendary-drop {
+  position: relative;
+  z-index: var(--z-elevated);
+}
+
+.legendary-drop::before {
+  content: '';
+  position: absolute;
+  top: -15px;
+  left: -15px;
+  right: -15px;
+  bottom: -15px;
+  background: radial-gradient(circle, rgba(255, 107, 53, 0.8) 0%, transparent 70%);
+  animation: legendary-aura 1.5s ease-out;
+  z-index: -1;
+  border-radius: 50%;
+}
+
+.legendary-drop::after {
+  content: '';
+  position: absolute;
+  top: -25px;
+  left: -25px;
+  right: -25px;
+  bottom: -25px;
+  background: 
+    conic-gradient(from 0deg, 
+      transparent 0deg, 
+      rgba(255, 107, 53, 0.6) 90deg, 
+      transparent 180deg, 
+      rgba(255, 107, 53, 0.6) 270deg, 
+      transparent 360deg);
+  animation: legendary-rays 2s linear infinite;
+  z-index: -2;
+  border-radius: 50%;
+}
+
+@keyframes legendary-aura {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(2);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.5);
+    opacity: 0.6;
+  }
+}
+
+@keyframes legendary-rays {
+  0% {
+    transform: rotate(0deg);
+    opacity: 0.8;
+  }
+  100% {
+    transform: rotate(360deg);
+    opacity: 0.8;
+  }
+}
+
+/* Rare item sparkle effect */
+.rare-drop {
+  position: relative;
+}
+
+.rare-drop::before {
+  content: '';
+  position: absolute;
+  top: -10px;
+  left: -10px;
+  right: -10px;
+  bottom: -10px;
+  background-image: 
+    radial-gradient(2px 2px at 20px 30px, rgba(255, 255, 0, 0.8), transparent),
+    radial-gradient(2px 2px at 40px 70px, rgba(255, 255, 0, 0.6), transparent),
+    radial-gradient(1px 1px at 90px 40px, rgba(255, 255, 0, 0.9), transparent),
+    radial-gradient(1px 1px at 130px 80px, rgba(255, 255, 0, 0.7), transparent);
+  background-repeat: repeat;
+  background-size: 150px 150px;
+  animation: sparkle-drift 3s linear infinite;
+  pointer-events: none;
+  border-radius: var(--radius-md);
+}
+
+@keyframes sparkle-drift {
+  0% {
+    transform: translate(0, 0);
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(20px, -20px);
+    opacity: 0.8;
+  }
+}
+
+/* =============================================================================
+   SPELL CASTING EFFECTS
+   ============================================================================= */
+
+.casting-effect {
+  position: relative;
+  overflow: visible;
+}
+
+.casting-effect::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: radial-gradient(circle, rgba(211, 145, 95, 0.8) 0%, transparent 70%);
+  border-radius: 50%;
+  animation: casting-buildup 2s ease-out;
+  transform: translate(-50%, -50%);
+  z-index: -1;
+}
+
+@keyframes casting-buildup {
+  0% {
+    width: 0;
+    height: 0;
+    opacity: 0;
+  }
+  50% {
+    width: 100px;
+    height: 100px;
+    opacity: 0.8;
+  }
+  100% {
+    width: 200px;
+    height: 200px;
+    opacity: 0;
+  }
+}
+
+/* Fire spell effect */
+.fire-spell {
+  position: relative;
+}
+
+.fire-spell::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 30% 70%, rgba(255, 68, 68, 0.6) 0%, transparent 40%),
+    radial-gradient(circle at 70% 30%, rgba(255, 136, 0, 0.4) 0%, transparent 40%),
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 68, 0.3) 0%, transparent 30%);
+  animation: fire-flicker 0.5s ease-in-out infinite alternate;
+  border-radius: var(--radius-md);
+  pointer-events: none;
+}
+
+@keyframes fire-flicker {
+  0% {
+    opacity: 0.8;
+    transform: scale(1) rotate(0deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1.1) rotate(2deg);
+  }
+}
+
+/* Ice spell effect */
+.ice-spell {
+  position: relative;
+}
+
+.ice-spell::before {
+  content: '';
+  position: absolute;
+  top: -5px;
+  left: -5px;
+  right: -5px;
+  bottom: -5px;
+  background: 
+    linear-gradient(45deg, transparent 30%, rgba(68, 170, 255, 0.3) 50%, transparent 70%),
+    linear-gradient(-45deg, transparent 30%, rgba(68, 170, 255, 0.2) 50%, transparent 70%);
+  animation: ice-crystal 1s ease-in-out infinite;
+  border-radius: var(--radius-md);
+  pointer-events: none;
+}
+
+@keyframes ice-crystal {
+  0% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+  100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+}
+
+/* Lightning spell effect */
+.lightning-spell {
+  position: relative;
+}
+
+.lightning-spell::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 68, 0.6);
+  animation: lightning-flash 0.1s ease-in-out infinite;
+  border-radius: var(--radius-md);
+  pointer-events: none;
+}
+
+@keyframes lightning-flash {
+  0%, 90% {
+    opacity: 0;
+  }
+  5%, 85% {
+    opacity: 1;
+  }
+}
+
+/* =============================================================================
+   DAMAGE NUMBER EFFECTS
+   ============================================================================= */
+
+.damage-number {
+  position: absolute;
+  font-family: var(--font-mono);
+  font-weight: var(--font-bold);
+  font-size: var(--text-lg);
+  color: var(--valencia);
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+  pointer-events: none;
+  z-index: var(--z-notification);
+  animation: damage-float 1.5s ease-out forwards;
+}
+
+.damage-number.critical {
+  font-size: var(--text-xl);
+  color: var(--whiskey);
+  animation: damage-critical 1.8s ease-out forwards;
+}
+
+.damage-number.heal {
+  color: var(--poison);
+  animation: heal-float 1.2s ease-out forwards;
+}
+
+@keyframes damage-float {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  20% {
+    opacity: 1;
+    transform: translateY(-20px) scale(1.2);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-80px) scale(0.8);
+  }
+}
+
+@keyframes damage-critical {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1) rotate(0deg);
+  }
+  15% {
+    opacity: 1;
+    transform: translateY(-15px) scale(1.5) rotate(5deg);
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(-25px) scale(1.3) rotate(-3deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-100px) scale(0.8) rotate(0deg);
+  }
+}
+
+@keyframes heal-float {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-60px) scale(0.9);
+  }
+}
+
+/* =============================================================================
+   PARTICLE SYSTEMS
+   ============================================================================= */
+
+.particle-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* Magical ambient particles */
+.magical-particles {
+  position: relative;
+  overflow: hidden;
+}
+
+.magical-particles::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    radial-gradient(2px 2px at 20px 30px, rgba(211, 145, 95, 0.4), transparent),
+    radial-gradient(2px 2px at 40px 70px, rgba(154, 91, 159, 0.3), transparent),
+    radial-gradient(1px 1px at 90px 40px, rgba(211, 145, 95, 0.5), transparent),
+    radial-gradient(1px 1px at 130px 80px, rgba(154, 91, 159, 0.4), transparent),
+    radial-gradient(2px 2px at 160px 30px, rgba(211, 145, 95, 0.3), transparent);
+  background-repeat: repeat;
+  background-size: 200px 100px;
+  animation: magical-drift 20s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes magical-drift {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-100px);
+  }
+}
+
+/* Explosion effect */
+.explosion-effect {
+  position: absolute;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: radial-gradient(circle, 
+    rgba(255, 255, 255, 1) 0%, 
+    rgba(255, 136, 0, 0.8) 30%, 
+    rgba(255, 68, 68, 0.6) 60%, 
+    transparent 100%);
+  animation: explosion 0.6s ease-out forwards;
+  pointer-events: none;
+  z-index: var(--z-overlay);
+}
+
+@keyframes explosion {
+  0% {
+    transform: scale(0);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+/* =============================================================================
+   UI TRANSITION EFFECTS
+   ============================================================================= */
+
+/* Page transitions */
+.page-transition-enter {
+  opacity: 0;
+  transform: translateX(100px) scale(0.9);
+}
+
+.page-transition-enter-active {
+  opacity: 1;
+  transform: translateX(0) scale(1);
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.page-transition-exit {
+  opacity: 1;
+  transform: translateX(0) scale(1);
+}
+
+.page-transition-exit-active {
+  opacity: 0;
+  transform: translateX(-100px) scale(0.9);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Slide transitions */
+.slide-up-enter {
+  opacity: 0;
+  transform: translateY(50px);
+}
+
+.slide-up-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: all var(--transition-base);
+}
+
+.slide-down-enter {
+  opacity: 0;
+  transform: translateY(-50px);
+}
+
+.slide-down-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: all var(--transition-base);
+}
+
+/* Fade transitions */
+.fade-enter {
+  opacity: 0;
+}
+
+.fade-enter-active {
+  opacity: 1;
+  transition: opacity var(--transition-base);
+}
+
+.fade-exit {
+  opacity: 1;
+}
+
+.fade-exit-active {
+  opacity: 0;
+  transition: opacity var(--transition-base);
+}
+
+/* Scale transitions */
+.scale-enter {
+  opacity: 0;
+  transform: scale(0.8);
+}
+
+.scale-enter-active {
+  opacity: 1;
+  transform: scale(1);
+  transition: all var(--transition-bounce);
+}
+
+/* =============================================================================
+   LOADING ANIMATIONS
+   ============================================================================= */
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(211, 145, 95, 0.3);
+  border-top-color: var(--whiskey);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-dots {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: center;
+}
+
+.loading-dot {
+  width: 8px;
+  height: 8px;
+  background: var(--whiskey);
+  border-radius: 50%;
+  animation: dot-bounce 1.4s ease-in-out infinite both;
+}
+
+.loading-dot:nth-child(1) { animation-delay: -0.32s; }
+.loading-dot:nth-child(2) { animation-delay: -0.16s; }
+.loading-dot:nth-child(3) { animation-delay: 0; }
+
+@keyframes dot-bounce {
+  0%, 80%, 100% {
+    transform: scale(0);
+  }
+  40% {
+    transform: scale(1);
+  }
+}
+
+.loading-pulse {
+  width: 40px;
+  height: 40px;
+  background: var(--whiskey);
+  border-radius: 50%;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(0);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+
+/* Progress loading bar */
+.loading-bar {
+  width: 200px;
+  height: 4px;
+  background: rgba(211, 145, 95, 0.2);
+  border-radius: 2px;
+  overflow: hidden;
+  position: relative;
+}
+
+.loading-bar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    var(--whiskey) 50%, 
+    transparent 100%);
+  animation: loading-sweep 1.5s ease-in-out infinite;
+}
+
+@keyframes loading-sweep {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+/* =============================================================================
+   HOVER EFFECTS
+   ============================================================================= */
+
+.hover-glow {
+  transition: all var(--transition-base);
+}
+
+.hover-glow:hover {
+  box-shadow: var(--shadow-glow);
+  transform: translateY(-2px);
+}
+
+.hover-scale {
+  transition: all var(--transition-base);
+}
+
+.hover-scale:hover {
+  transform: scale(1.05);
+}
+
+.hover-rotate {
+  transition: all var(--transition-base);
+}
+
+.hover-rotate:hover {
+  transform: rotate(5deg);
+}
+
+.hover-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.hover-shimmer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(255, 255, 255, 0.3) 50%, 
+    transparent 100%);
+  transition: left var(--transition-slow);
+}
+
+.hover-shimmer:hover::before {
+  left: 100%;
+}
+
+/* =============================================================================
+   RIPPLE EFFECTS
+   ============================================================================= */
+
+.ripple {
+  position: relative;
+  overflow: hidden;
+}
+
+.ripple::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.ripple:active::before {
+  width: 300px;
+  height: 300px;
+}
+
+/* =============================================================================
+   STATUS EFFECTS
+   ============================================================================= */
+
+.status-burning {
+  position: relative;
+}
+
+.status-burning::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(45deg, 
+    rgba(255, 68, 68, 0.6) 0%, 
+    rgba(255, 136, 0, 0.4) 50%, 
+    rgba(255, 68, 68, 0.6) 100%);
+  animation: burning-effect 0.5s ease-in-out infinite alternate;
+  border-radius: inherit;
+  z-index: -1;
+}
+
+@keyframes burning-effect {
+  0% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1.02);
+  }
+}
+
+.status-frozen {
+  position: relative;
+  filter: hue-rotate(180deg) brightness(0.8);
+}
+
+.status-frozen::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    linear-gradient(45deg, transparent 30%, rgba(68, 170, 255, 0.3) 50%, transparent 70%),
+    linear-gradient(-45deg, transparent 30%, rgba(68, 170, 255, 0.2) 50%, transparent 70%);
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.status-poisoned {
+  position: relative;
+}
+
+.status-poisoned::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle, 
+    rgba(68, 255, 68, 0.2) 0%, 
+    transparent 70%);
+  animation: poison-pulse 1s ease-in-out infinite;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+@keyframes poison-pulse {
+  0%, 100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+.status-stunned {
+  animation: stun-shake 0.1s ease-in-out infinite;
+}
+
+@keyframes stun-shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-2px);
+  }
+  75% {
+    transform: translateX(2px);
+  }
+}
+
+/* =============================================================================
+   ENERGY & POWER EFFECTS
+   ============================================================================= */
+
+.energy-buildup {
+  position: relative;
+}
+
+.energy-buildup::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: radial-gradient(circle, rgba(211, 145, 95, 0.8) 0%, transparent 70%);
+  border-radius: 50%;
+  animation: energy-charge 2s ease-out infinite;
+  transform: translate(-50%, -50%);
+  z-index: -1;
+}
+
+@keyframes energy-charge {
+  0% {
+    width: 0;
+    height: 0;
+    opacity: 0;
+  }
+  50% {
+    width: 150px;
+    height: 150px;
+    opacity: 0.8;
+  }
+  100% {
+    width: 0;
+    height: 0;
+    opacity: 0;
+  }
+}
+
+.power-aura {
+  position: relative;
+}
+
+.power-aura::before {
+  content: '';
+  position: absolute;
+  top: -20px;
+  left: -20px;
+  right: -20px;
+  bottom: -20px;
+  background: 
+    conic-gradient(from 0deg at 50% 50%, 
+      rgba(211, 145, 95, 0.4) 0deg, 
+      transparent 60deg, 
+      rgba(211, 145, 95, 0.4) 120deg, 
+      transparent 180deg, 
+      rgba(211, 145, 95, 0.4) 240deg, 
+      transparent 300deg, 
+      rgba(211, 145, 95, 0.4) 360deg);
+  animation: aura-rotation 3s linear infinite;
+  border-radius: 50%;
+  z-index: -1;
+}
+
+@keyframes aura-rotation {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* =============================================================================
+   RESPONSIVE ANIMATIONS
+   ============================================================================= */
+
+/* Reduce animations on mobile for performance */
+@media (max-width: 768px) {
+  .magical-particles::before {
+    animation-duration: 30s;
+  }
+  
+  .legendary-drop::after {
+    animation: none;
+  }
+  
+  .power-aura::before {
+    animation-duration: 5s;
+  }
+}
+
+/* Honor user preferences for reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .item-drop-effect,
+  .legendary-drop::before,
+  .legendary-drop::after,
+  .magical-particles::before,
+  .casting-effect::before,
+  .fire-spell::before,
+  .ice-spell::before,
+  .lightning-spell::before,
+  .damage-number,
+  .explosion-effect,
+  .loading-spinner,
+  .loading-dot,
+  .loading-pulse,
+  .loading-bar::before,
+  .status-burning::before,
+  .status-poisoned::before,
+  .status-stunned,
+  .energy-buildup::before,
+  .power-aura::before {
+    animation: none !important;
+  }
+  
+  .hover-glow:hover,
+  .hover-scale:hover,
+  .hover-rotate:hover {
+    transform: none !important;
+  }
+}
+
+/* =============================================================================
+   ADVANCED ARPG EFFECTS
+   ============================================================================= */
+
+/* Character Aura Effects */
+.character-aura {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: var(--z-background);
+}
+
+.aura-defensive {
+  background: radial-gradient(circle, 
+    rgba(68, 170, 255, 0.3) 0%, 
+    rgba(68, 170, 255, 0.1) 50%, 
+    transparent 100%);
+  animation: aura-pulse-defensive 3s ease-in-out infinite;
+}
+
+.aura-offensive {
+  background: radial-gradient(circle, 
+    rgba(255, 68, 68, 0.3) 0%, 
+    rgba(255, 68, 68, 0.1) 50%, 
+    transparent 100%);
+  animation: aura-pulse-offensive 2s ease-in-out infinite;
+}
+
+.aura-utility {
+  background: radial-gradient(circle, 
+    rgba(68, 255, 68, 0.3) 0%, 
+    rgba(68, 255, 68, 0.1) 50%, 
+    transparent 100%);
+  animation: aura-pulse-utility 4s ease-in-out infinite;
+}
+
+@keyframes aura-pulse-defensive {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.6; }
+  50% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.9; }
+}
+
+@keyframes aura-pulse-offensive {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.7; }
+  50% { transform: translate(-50%, -50%) scale(1.3); opacity: 1; }
+}
+
+@keyframes aura-pulse-utility {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.5; }
+  50% { transform: translate(-50%, -50%) scale(1.1); opacity: 0.8; }
+}
+
+/* Equipment Glow Effects */
+.equipment-glow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.equipment-glow.set-bonus {
+  background: radial-gradient(circle, 
+    rgba(68, 255, 68, 0.4) 0%, 
+    transparent 70%);
+  animation: set-bonus-glow 3s ease-in-out infinite;
+}
+
+.equipment-glow.corrupted {
+  background: radial-gradient(circle, 
+    rgba(255, 0, 255, 0.4) 0%, 
+    transparent 70%);
+  animation: corrupted-glow 2s ease-in-out infinite;
+}
+
+@keyframes set-bonus-glow {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.1); }
+}
+
+@keyframes corrupted-glow {
+  0%, 100% { opacity: 0.7; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.05); }
+}
+
+/* Portal Effects */
+.portal-effect {
+  position: absolute;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, 
+    rgba(68, 170, 255, 0.8) 0deg,
+    rgba(255, 68, 255, 0.8) 120deg,
+    rgba(68, 255, 68, 0.8) 240deg,
+    rgba(68, 170, 255, 0.8) 360deg);
+  animation: portal-spin 2s linear infinite;
+  filter: blur(2px);
+}
+
+.portal-effect::before {
+  content: '';
+  position: absolute;
+  top: 25%;
+  left: 25%;
+  width: 50%;
+  height: 50%;
+  background: radial-gradient(circle, 
+    rgba(0, 0, 0, 0.8) 0%, 
+    transparent 100%);
+  border-radius: 50%;
+}
+
+@keyframes portal-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Loot Beam Effects */
+.loot-beam {
+  position: absolute;
+  width: 20px;
+  height: 200px;
+  background: linear-gradient(180deg, 
+    transparent 0%, 
+    rgba(211, 145, 95, 0.8) 50%, 
+    transparent 100%);
+  animation: loot-beam-fade 3s ease-in-out;
+  pointer-events: none;
+  z-index: var(--z-notification);
+}
+
+.loot-beam.legendary {
+  background: linear-gradient(180deg, 
+    transparent 0%, 
+    rgba(255, 107, 53, 1) 50%, 
+    transparent 100%);
+  box-shadow: 0 0 20px rgba(255, 107, 53, 0.6);
+}
+
+.loot-beam.rare {
+  background: linear-gradient(180deg, 
+    transparent 0%, 
+    rgba(255, 255, 0, 0.9) 50%, 
+    transparent 100%);
+  box-shadow: 0 0 15px rgba(255, 255, 0, 0.5);
+}
+
+@keyframes loot-beam-fade {
+  0% { opacity: 0; transform: scaleY(0); }
+  20% { opacity: 1; transform: scaleY(1); }
+  80% { opacity: 1; transform: scaleY(1); }
+  100% { opacity: 0; transform: scaleY(0); }
+}
+
+/* Screen Shake Effect */
+@keyframes screen-shake {
+  0%, 100% { transform: translate(0, 0); }
+  10% { transform: translate(-2px, -1px); }
+  20% { transform: translate(2px, 1px); }
+  30% { transform: translate(-1px, 2px); }
+  40% { transform: translate(1px, -2px); }
+  50% { transform: translate(-2px, 1px); }
+  60% { transform: translate(2px, -1px); }
+  70% { transform: translate(-1px, -2px); }
+  80% { transform: translate(1px, 2px); }
+  90% { transform: translate(-2px, -1px); }
+}
+
+.screen-shake {
+  animation: screen-shake 0.5s ease-in-out;
+}
+
+/* Critical Strike Effect */
+.critical-strike-effect {
+  position: absolute;
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  background: radial-gradient(circle, 
+    rgba(255, 255, 0, 0.9) 0%, 
+    rgba(255, 215, 0, 0.6) 50%, 
+    transparent 100%);
+  animation: critical-burst 0.6s ease-out;
+  pointer-events: none;
+  z-index: var(--z-notification);
+}
+
+.critical-strike-effect::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 20px;
+  height: 20px;
+  background: rgba(255, 255, 255, 1);
+  border-radius: 50%;
+  animation: critical-flash 0.3s ease-out;
+}
+
+@keyframes critical-burst {
+  0% { transform: scale(0); opacity: 1; }
+  100% { transform: scale(2); opacity: 0; }
+}
+
+@keyframes critical-flash {
+  0% { transform: translate(-50%, -50%) scale(0); opacity: 1; }
+  50% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+}
+
+/* Level Up Visual Enhancement */
+.level-up-burst {
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background: radial-gradient(circle, 
+    rgba(255, 215, 0, 0.8) 0%, 
+    rgba(255, 165, 0, 0.4) 50%, 
+    transparent 100%);
+  animation: level-up-mega-burst 2s ease-out;
+  pointer-events: none;
+  z-index: var(--z-notification);
+}
+
+.level-up-burst::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+  background: conic-gradient(from 0deg, 
+    rgba(255, 215, 0, 0.6) 0deg,
+    transparent 60deg,
+    rgba(255, 215, 0, 0.6) 120deg,
+    transparent 180deg,
+    rgba(255, 215, 0, 0.6) 240deg,
+    transparent 300deg,
+    rgba(255, 215, 0, 0.6) 360deg);
+  border-radius: 50%;
+  animation: level-up-rays 2s linear;
+}
+
+@keyframes level-up-mega-burst {
+  0% { transform: scale(0); opacity: 1; }
+  50% { transform: scale(1.2); opacity: 0.8; }
+  100% { transform: scale(2); opacity: 0; }
+}
+
+@keyframes level-up-rays {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* Boss Death Effect */
+.boss-death-effect {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at center, 
+    rgba(255, 0, 0, 0.3) 0%, 
+    rgba(255, 165, 0, 0.2) 30%, 
+    transparent 70%);
+  animation: boss-death-flash 1.5s ease-out;
+  pointer-events: none;
+  z-index: var(--z-modal);
+}
+
+@keyframes boss-death-flash {
+  0% { opacity: 0; }
+  10% { opacity: 1; }
+  30% { opacity: 0.8; }
+  60% { opacity: 0.3; }
+  100% { opacity: 0; }
+}
+
+/* Map Transition Effect */
+.map-transition {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, 
+    var(--obsidian) 0%, 
+    var(--valhalla) 50%, 
+    var(--obsidian) 100%);
+  z-index: var(--z-maximum);
+  animation: map-transition-wipe 1s ease-in-out;
+}
+
+@keyframes map-transition-wipe {
+  0% { clip-path: circle(0% at 50% 50%); }
+  50% { clip-path: circle(100% at 50% 50%); }
+  100% { clip-path: circle(0% at 50% 50%); }
+}
+
+/* =============================================================================
+   ACCESSIBILITY ENHANCEMENTS
+   ============================================================================= */
+
+/* High contrast mode adjustments */
+@media (prefers-contrast: high) {
+  .damage-number {
+    text-shadow: 3px 3px 6px rgba(0, 0, 0, 1);
+  }
+  
+  .magical-particles::before {
+    opacity: 0.3;
+  }
+  
+  .status-burning::before,
+  .status-frozen::before,
+  .status-poisoned::before {
+    opacity: 0.8;
+  }
+  
+  .character-aura,
+  .equipment-glow,
+  .portal-effect {
+    opacity: 0.5;
+  }
+}

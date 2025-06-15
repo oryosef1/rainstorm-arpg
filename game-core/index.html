@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RainStorm ARPG - Modern Browser-Based Action RPG</title>
+    <meta name="description" content="A modern browser-based Action RPG built with Entity-Component-System architecture">
+    <meta name="keywords" content="ARPG, browser game, RPG, action RPG, ECS, JavaScript">
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="./assets/fonts/game-font.woff2" as="font" type="font/woff2" crossorigin>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f172a 100%);
+            color: #e2e8f0;
+            overflow: hidden;
+        }
+        
+        #game-canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+            cursor: crosshair;
+        }
+        
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f172a 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        
+        .loading-text {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 2rem;
+            background: linear-gradient(45deg, #4f46e5, #06b6d4, #10b981);
+            background-size: 200% 200%;
+            animation: gradient 3s ease infinite;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .loading-bar {
+            width: 300px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        
+        .loading-progress {
+            height: 100%;
+            background: linear-gradient(90deg, #4f46e5, #06b6d4);
+            border-radius: 2px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+        
+        .version-info {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            font-size: 0.8rem;
+            opacity: 0.7;
+        }
+        
+        .error-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #1a1a2e;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+        }
+        
+        .error-text {
+            color: #ef4444;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .error-details {
+            color: #94a3b8;
+            font-size: 1rem;
+            text-align: center;
+            max-width: 600px;
+        }
+        
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        /* UI Overlay */
+        .ui-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1000;
+        }
+        
+        .hud {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            pointer-events: auto;
+        }
+        
+        .health-bar, .mana-bar {
+            width: 200px;
+            height: 20px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid #64748b;
+            border-radius: 10px;
+            margin-bottom: 5px;
+            overflow: hidden;
+        }
+        
+        .health-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #dc2626, #ef4444);
+            transition: width 0.3s ease;
+        }
+        
+        .mana-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #1d4ed8, #3b82f6);
+            transition: width 0.3s ease;
+        }
+        
+        .stats-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #64748b;
+            pointer-events: auto;
+            min-width: 200px;
+        }
+        
+        .fps-counter {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            pointer-events: auto;
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loading-text">RainStorm ARPG</div>
+        <div class="loading-bar">
+            <div class="loading-progress" id="loadingProgress"></div>
+        </div>
+        <div class="version-info">v2.0.0 - ECS Edition</div>
+    </div>
+    
+    <!-- Error Screen -->
+    <div class="error-screen" id="errorScreen">
+        <div class="error-text">Failed to Load Game</div>
+        <div class="error-details" id="errorDetails">
+            Please check your browser console for more details.
+        </div>
+    </div>
+    
+    <!-- Game Canvas -->
+    <canvas id="game-canvas"></canvas>
+    
+    <!-- UI Overlay -->
+    <div class="ui-overlay">
+        <!-- HUD -->
+        <div class="hud">
+            <div class="health-bar">
+                <div class="health-fill" id="healthFill" style="width: 100%;"></div>
+            </div>
+            <div class="mana-bar">
+                <div class="mana-fill" id="manaFill" style="width: 100%;"></div>
+            </div>
+        </div>
+        
+        <!-- Stats Panel -->
+        <div class="stats-panel">
+            <h3>Character Stats</h3>
+            <div id="characterStats">
+                <div>Level: <span id="playerLevel">1</span></div>
+                <div>Experience: <span id="playerExp">0</span>/<span id="playerExpNext">100</span></div>
+                <div>Strength: <span id="playerStr">10</span></div>
+                <div>Dexterity: <span id="playerDex">10</span></div>
+                <div>Intelligence: <span id="playerInt">10</span></div>
+            </div>
+        </div>
+        
+        <!-- FPS Counter -->
+        <div class="fps-counter">
+            FPS: <span id="fpsDisplay">60</span> | 
+            Entities: <span id="entityCount">0</span>
+        </div>
+    </div>
+    
+    <script>
+        // Loading and error handling
+        const loadingScreen = document.getElementById('loadingScreen');
+        const errorScreen = document.getElementById('errorScreen');
+        const loadingProgress = document.getElementById('loadingProgress');
+        
+        let loadingStep = 0;
+        const loadingSteps = ['Initializing...', 'Loading Systems...', 'Creating World...', 'Ready!'];
+        
+        function updateLoading(progress) {
+            loadingProgress.style.width = progress + '%';
+            if (progress >= 100) {
+                setTimeout(() => {
+                    loadingScreen.style.display = 'none';
+                }, 500);
+            }
+        }
+        
+        function showError(message) {
+            loadingScreen.style.display = 'none';
+            errorScreen.style.display = 'flex';
+            document.getElementById('errorDetails').textContent = message;
+        }
+        
+        // Global error handling
+        window.addEventListener('error', (event) => {
+            console.error('Game Error:', event.error);
+            showError(`Error: ${event.error.message}`);
+        });
+        
+        window.addEventListener('unhandledrejection', (event) => {
+            console.error('Unhandled Promise Rejection:', event.reason);
+            showError(`Promise Error: ${event.reason}`);
+        });
+        
+        // Performance monitoring
+        function updatePerformanceDisplay() {
+            if (window.gameState && window.gameState.performanceManager) {
+                const metrics = window.gameState.performanceManager.getPerformanceMetrics();
+                document.getElementById('fpsDisplay').textContent = Math.round(metrics.averageFPS || 0);
+                document.getElementById('entityCount').textContent = window.gameState.world ? window.gameState.world.entities.size : 0;
+            }
+            requestAnimationFrame(updatePerformanceDisplay);
+        }
+        
+        // Start performance monitoring
+        updatePerformanceDisplay();
+        
+        // Simulate loading progress
+        updateLoading(25);
+        setTimeout(() => updateLoading(50), 500);
+        setTimeout(() => updateLoading(75), 1000);
+        setTimeout(() => updateLoading(100), 1500);
+    </script>
+</body>
+</html>

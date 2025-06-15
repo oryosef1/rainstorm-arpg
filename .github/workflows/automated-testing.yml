@@ -1,0 +1,262 @@
+name: RainStorm ARPG - Automated Testing
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  # Unit and Integration Tests
+  unit-tests:
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: rainstorm_user
+          POSTGRES_PASSWORD: rainstorm_password_2024
+          POSTGRES_DB: rainstorm_arpg
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Initialize database
+      run: |
+        npm run setup:db
+      env:
+        POSTGRES_CONNECTION_STRING: postgresql://rainstorm_user:rainstorm_password_2024@localhost:5432/rainstorm_arpg
+
+    - name: Run Jest tests
+      run: npm test -- --coverage --ci
+
+    - name: Upload coverage reports
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage/lcov.info
+
+    - name: Run ESLint
+      run: npm run lint
+
+  # End-to-End Tests
+  e2e-tests:
+    runs-on: ubuntu-latest
+    needs: unit-tests
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Build production bundle
+      run: npm run build
+
+    - name: Start HTTP server
+      run: |
+        npm run serve &
+        sleep 5
+        curl -f http://localhost:8000 || exit 1
+
+    - name: Run Puppeteer E2E tests
+      run: npm run test:e2e
+
+    - name: Upload test screenshots
+      uses: actions/upload-artifact@v3
+      if: failure()
+      with:
+        name: e2e-screenshots
+        path: tests/screenshots/
+
+  # Performance Testing
+  performance-tests:
+    runs-on: ubuntu-latest
+    needs: unit-tests
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Build production bundle
+      run: npm run build
+
+    - name: Analyze bundle size
+      run: npm run analyze
+
+    - name: Run performance tests
+      run: |
+        npm run serve &
+        sleep 5
+        node tests/performance/lighthouse-tests.js
+
+    - name: Upload performance reports
+      uses: actions/upload-artifact@v3
+      with:
+        name: performance-reports
+        path: tests/performance/reports/
+
+  # Security Scanning
+  security-scan:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Run npm audit
+      run: npm audit --audit-level high
+
+    - name: Run CodeQL Analysis
+      uses: github/codeql-action/init@v2
+      with:
+        languages: javascript
+
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v2
+
+  # MCP Integration Testing
+  mcp-integration:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: rainstorm_user
+          POSTGRES_PASSWORD: rainstorm_password_2024
+          POSTGRES_DB: rainstorm_arpg
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Install MCP servers
+      run: |
+        npm install -g @modelcontextprotocol/server-filesystem
+        npm install -g @modelcontextprotocol/server-github
+        npm install -g @modelcontextprotocol/server-postgres
+        npm install -g @modelcontextprotocol/server-puppeteer
+
+    - name: Test MCP servers
+      run: |
+        npx @modelcontextprotocol/server-filesystem --help
+        npx @modelcontextprotocol/server-github --help
+        npx @modelcontextprotocol/server-postgres --help
+        npx @modelcontextprotocol/server-puppeteer --help
+
+    - name: Initialize database
+      run: npm run setup:db
+      env:
+        POSTGRES_CONNECTION_STRING: postgresql://rainstorm_user:rainstorm_password_2024@localhost:5432/rainstorm_arpg
+
+    - name: Test database operations
+      run: |
+        node -e "
+        const { DatabaseManager } = require('./game-core/database/database-manager');
+        const db = new DatabaseManager();
+        db.healthCheck().then(result => {
+          console.log('✅ Database health check:', result);
+          return db.close();
+        }).catch(err => {
+          console.error('❌ Database test failed:', err);
+          process.exit(1);
+        });
+        "
+
+  # Deployment (if all tests pass)
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [unit-tests, e2e-tests, performance-tests, security-scan]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Build production bundle
+      run: npm run build
+
+    - name: Create deployment package
+      run: |
+        tar -czf rainstorm-arpg-$(date +%Y%m%d-%H%M%S).tar.gz dist/
+
+    - name: Upload deployment artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: production-build
+        path: rainstorm-arpg-*.tar.gz
+        retention-days: 30
+
+    - name: Notify deployment status
+      run: |
+        echo "🎮 RainStorm ARPG deployment package created successfully!"
+        echo "📦 Ready for production deployment"
