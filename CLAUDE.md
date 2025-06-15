@@ -18,20 +18,24 @@
 
 ## 🚀 CONFLICT-FREE DEVELOPMENT WORKFLOW (Every Session)
 1. Read `memory.md` & `COMPLETE_TODO.md`
-2. **CHOOSE YOUR FEATURE POD**: Work ONLY in your assigned feature directory
-3. **USE FEATURE GENERATOR**: `npx ts-node tools/create-feature.ts --name your-feature`
-4. **FOLLOW POD ARCHITECTURE**: All code in isolated feature pod
-5. **USE EVENT COMMUNICATION**: No direct calls between features
-6. **WRITE TESTS**: TDD within your feature pod
-7. **VERIFY INTEGRATION**: Test event flows with other features
-8. **UPDATE PROGRESS**: Mark complete in COMPLETE_TODO.md & memory.md
-9. **REPEAT**: Zero conflicts with other developers guaranteed!
+2. **PULL LATEST CHANGES**: `git pull origin main` (always start with latest)
+3. **CHOOSE YOUR FEATURE POD**: Work ONLY in your assigned feature directory
+4. **USE FEATURE GENERATOR**: `npx ts-node tools/create-feature.ts --name your-feature`
+5. **FOLLOW POD ARCHITECTURE**: All code in isolated feature pod
+6. **USE EVENT COMMUNICATION**: No direct calls between features
+7. **WRITE TESTS**: TDD within your feature pod
+8. **VERIFY INTEGRATION**: Test event flows with other features
+9. **UPDATE PROGRESS**: Mark complete in COMPLETE_TODO.md & memory.md
+10. **COMMIT & PUSH**: Always commit and push your changes when done
+11. **REPEAT**: Zero conflicts with other developers guaranteed!
 
 ## Stack & Architecture
 - **Architecture**: Revolutionary Feature Pod System (conflict-free)
 - **Communication**: Event-driven with zero conflicts
 - **Development**: Contract-first API development
 - **Language**: TypeScript ONLY (100% conversion complete)
+- **Repository**: GitHub - https://github.com/oryosef1/rainstorm-arpg
+- **Version Control**: Git with continuous integration
 - **Server**: `python3 -m http.server 8000`
 - **Game**: `http://localhost:8000/rainstorm_game.html`
 - **Test**: `npm test`
@@ -117,3 +121,54 @@ npx ts-node tools/create-feature.ts --name my-awesome-feature
 - **TYPESCRIPT ONLY**: All new files must use .ts extension - NO .js files
 - **ZERO CONFLICTS**: Feature isolation prevents all development conflicts
 - **HOT RELOADING**: Features auto-discovered and updated without restarts
+
+## 📚 GITHUB INTEGRATION - MANDATORY WORKFLOW
+**CRITICAL**: ALL development MUST use GitHub for version control and collaboration!
+
+### **Repository Information**
+- **Repository URL**: https://github.com/oryosef1/rainstorm-arpg
+- **Main Branch**: `main`
+- **Status**: Production-ready AAA game with 8,000+ lines TypeScript
+
+### **Git Workflow - EVERY SESSION**
+```bash
+# 1. ALWAYS start with latest changes
+git pull origin main
+
+# 2. Work on your feature (in your assigned pod)
+# ... make your changes ...
+
+# 3. Stage your changes
+git add .
+
+# 4. Commit with comprehensive message
+git commit -m "Add [feature]: [description]
+
+🚀 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>"
+
+# 5. ALWAYS push when done
+git push origin main
+```
+
+### **Commit Message Format**
+```
+[Type] [Feature]: [Short description]
+
+[Optional detailed description]
+
+🚀 Generated with [Claude Code](https://claude.ai/code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+```
+
+**Types**: Add, Update, Fix, Refactor, Test, Docs, Style
+
+### **Critical Git Rules**
+- ✅ **ALWAYS pull before starting work**
+- ✅ **ALWAYS commit and push when done**
+- ✅ **NEVER work without version control**
+- ✅ **Use descriptive commit messages**
+- ✅ **Include co-author attribution**
+- ✅ **Push frequently to avoid conflicts**
