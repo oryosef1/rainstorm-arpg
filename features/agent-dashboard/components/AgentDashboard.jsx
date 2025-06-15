@@ -5,7 +5,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   Activity, Settings, Users, Play, Pause, RotateCcw, 
   AlertTriangle, CheckCircle, Clock, Zap, Brain, 
-  Code, Bug, FileText, TestTube, Target, BarChart3, MessageSquare, Monitor, Database, Layers, GitBranch
+  Code, Bug, FileText, TestTube, Target, BarChart3, MessageSquare, Monitor, Database, Layers, GitBranch, Server
 } from 'lucide-react';
 
 import ClaudeInterface from './ClaudeInterface.jsx';
@@ -21,6 +21,8 @@ import TodoIntegration from './TodoIntegration.jsx';
 import ProjectHealthMonitor from './ProjectHealthMonitor.jsx';
 import GitIntegration from './GitIntegration.jsx';
 import ContentGenerationDashboard from './ContentGenerationDashboard.jsx';
+import WorkflowOrchestrator from './WorkflowOrchestrator.jsx';
+import DeploymentManager from './DeploymentManager.jsx';
 
 const AgentDashboard = ({ eventBus, config = {} }) => {
   const [activeTab, setActiveTab] = useState('projects');
@@ -386,6 +388,8 @@ const AgentDashboard = ({ eventBus, config = {} }) => {
     { id: 'health', name: 'Project Health', icon: <CheckCircle className="w-4 h-4" /> },
     { id: 'git', name: 'Git Integration', icon: <GitBranch className="w-4 h-4" /> },
     { id: 'content', name: 'Content Generation', icon: <Brain className="w-4 h-4" /> },
+    { id: 'orchestrator', name: 'Workflow Orchestrator', icon: <Zap className="w-4 h-4" /> },
+    { id: 'deployment', name: 'Deployment Manager', icon: <Server className="w-4 h-4" /> },
     { id: 'claude', name: 'Claude Interface', icon: <Brain className="w-4 h-4" /> },
     { id: 'workflows', name: 'Workflow Builder', icon: <Zap className="w-4 h-4" /> },
     { id: 'monitor', name: 'Real-time Monitor', icon: <Activity className="w-4 h-4" /> }
@@ -590,6 +594,21 @@ const AgentDashboard = ({ eventBus, config = {} }) => {
         
         {activeTab === 'content' && (
           <ContentGenerationDashboard
+            eventBus={eventBus}
+            activeProject={activeProject}
+          />
+        )}
+        
+        {activeTab === 'orchestrator' && (
+          <WorkflowOrchestrator
+            eventBus={eventBus}
+            activeProject={activeProject}
+            activeSession={activeSession}
+          />
+        )}
+        
+        {activeTab === 'deployment' && (
+          <DeploymentManager
             eventBus={eventBus}
             activeProject={activeProject}
           />
